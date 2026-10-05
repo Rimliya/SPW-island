@@ -87,8 +87,8 @@ tasks.jar {
         "Plugin-Id" to "io.github.gaboron.spwisland",
         "Plugin-Name" to "Dynamic Lyrics Island for SPW",
         "Plugin-Version" to project.version.toString(),
-        "Plugin-Provider" to "GaBoron",
-        "Plugin-Description" to "SPW lyrics island; concept by Lyricify / WXRIW (CC BY-SA 4.0)",
+        "Plugin-Provider" to "GaBoron / Solitaire",
+        "Plugin-Description" to "SPW lyrics island; concept by Lyricify / WXRIW (CC BY-SA 4.0); OBS Spout2 capture fork",
         "Plugin-Has-Config" to "true",
         "Plugin-Open-Source-Url" to projectUrl.get()
     )
