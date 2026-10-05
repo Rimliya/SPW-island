@@ -4,7 +4,7 @@
 
 ## 下载
 
-从 [Releases](https://github.com/GaBoron/Dynamic-Lyrics-Island-for-SPW/releases/latest) 下载与你的平台对应的插件包：
+从 [Releases](https://github.com/GaBoron/SPW-island/releases/latest) 下载与你的平台对应的插件包：
 
 | 平台 | 文件名 | 状态 |
 | --- | --- | --- |

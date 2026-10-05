@@ -15,6 +15,6 @@
 
 ## 常用入口
 
-- [下载最新版本](https://github.com/GaBoron/Dynamic-Lyrics-Island-for-SPW/releases/latest)
-- [提交 Issue](https://github.com/GaBoron/Dynamic-Lyrics-Island-for-SPW/issues)
+- [下载最新版本](https://github.com/GaBoron/SPW-island/releases/latest)
+- [提交 Issue](https://github.com/GaBoron/SPW-island/issues)
 - [SPW-Lyrics](https://github.com/GaBoron/SPW-Lyrics)：可选的歌词获取插件

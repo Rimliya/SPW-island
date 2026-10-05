@@ -13,7 +13,7 @@
 <p align="center">为 Salt Player for Windows 制作的桌面歌词词岛。</p>
 
 <p align="center">
-  <a href="https://github.com/GaBoron/Dynamic-Lyrics-Island-for-SPW/releases/latest"><img src="https://img.shields.io/github/v/release/GaBoron/Dynamic-Lyrics-Island-for-SPW?label=Release" alt="Release"></a>
+  <a href="https://github.com/GaBoron/SPW-island/releases/latest"><img src="https://img.shields.io/github/v/release/GaBoron/SPW-island?label=Release" alt="Release"></a>
   <a href="docs/compatibility.md"><img src="https://img.shields.io/badge/Windows-10%20%2F%2011-0078D4?logo=windows" alt="Windows 10 / 11"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-GPL--3.0%20%2B%20AGPL--3.0-blue" alt="License"></a>
 </p>
@@ -35,7 +35,7 @@
 
 ## 安装
 
-1. 前往 [Releases](https://github.com/GaBoron/Dynamic-Lyrics-Island-for-SPW/releases/latest) 下载与你的平台对应的插件 ZIP；
+1. 前往 [Releases](https://github.com/GaBoron/SPW-island/releases/latest) 下载与你的平台对应的插件 ZIP；
 2. 在 SPW 的创意工坊 / 插件管理中导入；
 3. 启用插件并播放一首已经有歌词的歌曲。
 
@@ -67,7 +67,7 @@ Linux 实时频谱需要 PipeWire 与 `pw-record` / `pw-dump`；悬停隐藏支�
 
 ## 反馈与贡献
 
-遇到问题或有功能想法，可以直接开 [Issue](https://github.com/GaBoron/Dynamic-Lyrics-Island-for-SPW/issues)。
+遇到问题或有功能想法，可以直接开 [Issue](https://github.com/GaBoron/SPW-island/issues)。
 
 较大的功能、UI 行为或平台改动建议先在 Issue 里把目标和范围说清楚，再开始完整实现；小型修复和文档修改可以直接提交 PR。项目的代码边界和贡献习惯写在 [开发指南](docs/development.md) 中。
 

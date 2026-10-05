@@ -225,7 +225,7 @@ Linux 配置页提供实时频谱、频谱取色、鼠标穿透和悬停自动�
 
 ## 提交 Issue
 
-上面的办法都没解决，可以到 [Issues](https://github.com/GaBoron/Dynamic-Lyrics-Island-for-SPW/issues) 反馈。
+上面的办法都没解决，可以到 [Issues](https://github.com/GaBoron/SPW-island/issues) 反馈。
 
 至少写清楚平台、系统版本、SPW 版本、插件版本、复现步骤，以及问题是每次都出现还是偶发。截图或录屏尽量同时带上 SPW 和词岛状态。
 
