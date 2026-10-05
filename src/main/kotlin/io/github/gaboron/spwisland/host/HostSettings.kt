@@ -65,7 +65,7 @@ class HostSettings(private val manager: ConfigManager, private val changed: () -
         autoHideOnHover = config.get("auto_hide_on_hover", accepted?.autoHideOnHover ?: false),
         // Keep the original key so existing users retain their enabled setting after the rename.
         lowPerformance = config.get("reduced_motion", false), notch = config.get("shape", "pill") == "notch",
-        cornerRoundness = number("corner_roundness", 95, 0, 100),
+        cornerRoundness = number("corner_roundness", 60, 0, 100),
         lyricCoverColor = config.get("lyric_cover_color", false),
         backgroundCoverColor = config.get("background_cover_color", false),
         backgroundProgress = backgroundProgressMode(),
@@ -182,7 +182,7 @@ class HostSettings(private val manager: ConfigManager, private val changed: () -
 
     private fun migrateCornerRoundnessForV0100(): Boolean {
         if (config.get(CORNER_ROUNDNESS_V0100_MIGRATED, false)) return false
-        config.set("corner_roundness", 95)
+        config.set("corner_roundness", 60)
         config.set(CORNER_ROUNDNESS_V0100_MIGRATED, true)
         return true
     }
@@ -274,7 +274,7 @@ class HostSettings(private val manager: ConfigManager, private val changed: () -
 
     private companion object {
         val INTEGER_SETTINGS = mapOf(
-            "corner_roundness" to IntegerLimits(95, 0, 100),
+            "corner_roundness" to IntegerLimits(60, 0, 100),
             "font_size" to IntegerLimits(22, 12, 72),
             "max_width" to IntegerLimits(640, 280, 1200),
             "opacity" to IntegerLimits(96, 35, 100),

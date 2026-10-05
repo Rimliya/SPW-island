@@ -1,0 +1,38 @@
+name: build
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  windows:
+    name: Windows x64 package
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Build plugin package and source archive
+        run: ./gradlew --no-daemon --stacktrace pluginWindows sourceArchive
+
+      - name: List outputs
+        run: Get-ChildItem build/distributions | Format-Table Name, Length
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: spw-island-windows-x64
+          path: build/distributions/*.zip
+          if-no-files-found: error

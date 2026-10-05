@@ -11,7 +11,7 @@ object IslandGeometry {
     private var cachedShape: Shape? = null
 
     fun contentInset(width: Int, height: Int, notch: Boolean, top: Int, bottom: Int,
-                     cornerRoundness: Int = 95): Float {
+                     cornerRoundness: Int = 60): Float {
         val shape = silhouette(width, height, notch, cornerRoundness)
         var inset = 0
         for (y in top.coerceAtLeast(1)..bottom.coerceAtMost(height - 2)) {
@@ -36,7 +36,7 @@ object IslandGeometry {
     }
 
     @Synchronized
-    fun silhouette(width: Int, height: Int, notch: Boolean, cornerRoundness: Int = 95): Shape {
+    fun silhouette(width: Int, height: Int, notch: Boolean, cornerRoundness: Int = 60): Shape {
         val key = SilhouetteKey(width, height, notch, cornerRoundness.coerceIn(0, 100))
         if (key == cachedKey) return cachedShape!!
         val w = (width - 1).coerceAtLeast(0).toDouble()
