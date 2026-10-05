@@ -35,6 +35,13 @@ object IslandSettingsDefaults {
         "position_anchor" to "",
         "center_x" to Int.MIN_VALUE,
         "top" to Int.MIN_VALUE,
-        "vertical_anchor" to "free"
+        "vertical_anchor" to "free",
+        // Spout2 form fields are SPW list/edittext controls, which persist their values as strings.
+        "spout_enabled" to defaults.spout.enabled,
+        "spout_name" to defaults.spout.name,
+        "spout_fps" to defaults.spout.fps.toString(),
+        "spout_width" to defaults.spout.width.toString(),
+        "spout_height" to defaults.spout.height.toString(),
+        "spout_adapter" to defaults.spout.adapter.toString()
     )
 }

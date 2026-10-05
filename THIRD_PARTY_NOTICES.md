@@ -1,5 +1,12 @@
 # 第三方许可与署名
 
+## Spout2（本地 OBS 输出扩展）
+
+Windows 发送器静态链接 leadedge/Spout2 `2.007.017` 的 DirectX 11 必需源码。
+作者 Lynn Jarvis 及各源文件列出的贡献者，采用 BSD-2-Clause；原文见
+`licenses/Spout2-BSD-2-Clause.txt`，来源见 `native/spout/vendor/README.md`。
+本项目原生桥采用 GPL-3.0-only。
+
 ## 灵动词岛
 
 “灵动词岛 / Dynamic Lyrics Island”原创为 **Lyricify / WXRIW（XY Wang）**，首次创作于 2022-09-30。

@@ -10,6 +10,7 @@ enum class SideContent(val showsSpectrum: Boolean, val showsSides: Boolean) {
 enum class BackgroundProgressMode { OFF, FILL, TOP_LINE }
 
 data class IslandSettings(
+    val spout: SpoutSettings = SpoutSettings(),
     val enabled: Boolean = true,
     val translation: Boolean = true,
     val karaoke: Boolean = true,

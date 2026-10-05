@@ -75,7 +75,9 @@ class IslandRuntime : AutoCloseable {
     }
     private fun updateSpectrumMode() {
         val current = settings.read()
-        spectrum.setEnabled(current.enabled && current.performance.spectrumMode == SpectrumMode.LIVE &&
+        // The Spout2 output is independent of desktop visibility and keeps its live spectrum.
+        spectrum.setEnabled((current.enabled || current.spout.enabled) &&
+            current.performance.spectrumMode == SpectrumMode.LIVE &&
             current.sideContent.showsSpectrum && (!Platform.isLinux() || timeline.snapshot().playing))
     }
     fun recover() = safely {

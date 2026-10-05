@@ -1,5 +1,9 @@
 # 开发指南
 
+本地 Spout2 扩展：`SpoutSettings` 定义配置；`HostSettings` 读取 Windows 设置；
+`SpoutRenderer`/`SpoutOutput` 负责独立离屏绘制与调度；`SpoutSender` 管理有界帧缓冲、
+JNA 与原生所属线程；`native/spout` 构建 D3D11 发送桥。详见 [OBS Spout2](obs-spout2.md)。
+
 本文面向希望了解、修改或贡献灵动词岛 for SPW 的开发者。
 
 如果只是安装或使用插件，请阅读：

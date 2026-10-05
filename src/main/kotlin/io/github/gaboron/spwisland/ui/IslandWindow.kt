@@ -51,6 +51,8 @@ class IslandWindow(private val timeline: PlaybackSource, private val store: Sett
         layeredPane.isOpaque = false
     }
     private val panel = IslandPanel(actions, report)
+    // Independent OBS output: its own collapsed panel, unaffected by desktop visibility or hover state.
+    private val spout = if (Platform.isWindows()) SpoutOutput(report) else null
     private val surface = IslandSurface(panel)
     private val hoverVisibility = IslandHoverVisibility()
     private val expandedMotion = IslandExpandedMotion()
@@ -172,6 +174,11 @@ class IslandWindow(private val timeline: PlaybackSource, private val store: Sett
     internal val presentedFrames: Long get() = window.presentedFrames
 
     private fun tick() {
+        tickDesktop()
+        if (!closed) spout?.nextDelayMs()?.let { frameDelayMs = minOf(frameDelayMs, it) }
+    }
+
+    private fun tickDesktop() {
         if (closed) return
         // Local optimistic edits must take effect even before the next host notification.
         settings = store.read()
@@ -191,6 +198,13 @@ class IslandWindow(private val timeline: PlaybackSource, private val store: Sett
         }
         val visible = settings.enabled && (!settings.hidePaused || snap.playing) && (!settings.hideFullscreen || !fullscreen)
         globalPointer?.setEnabled(clickThrough && settings.autoHideOnHover && visible)
+        val levels = if (!snap.playing || !settings.sideContent.showsSpectrum) FloatArray(4)
+            else when (performance.spectrumMode) {
+                SpectrumMode.LIVE -> if (spectrumFallback()) SyntheticSpectrum.levels(snap.positionMs) else spectrum()
+                SpectrumMode.SYNTHETIC -> SyntheticSpectrum.levels(snap.positionMs)
+            }
+        // Before the desktop visibility early return: hidden, paused or full-screen policies do not stop OBS output.
+        spout?.tick(settings, snap, levels, now)
         if (!visible) {
             // Avoid changing the native bounds or painting while the transparent peer is hidden.
             if (window.isVisible) window.isVisible = false
@@ -203,11 +217,6 @@ class IslandWindow(private val timeline: PlaybackSource, private val store: Sett
             return
         }
         panel.settings = settings; panel.snapshot = snap
-        val levels = if (!snap.playing || !settings.sideContent.showsSpectrum) FloatArray(4)
-            else when (performance.spectrumMode) {
-                SpectrumMode.LIVE -> if (spectrumFallback()) SyntheticSpectrum.levels(snap.positionMs) else spectrum()
-                SpectrumMode.SYNTHETIC -> SyntheticSpectrum.levels(snap.positionMs)
-            }
         panel.updateSpectrum(levels, dt)
 
         val devices = GraphicsEnvironment.getLocalGraphicsEnvironment().screenDevices
@@ -378,7 +387,7 @@ class IslandWindow(private val timeline: PlaybackSource, private val store: Sett
 
     override fun close() {
         if (closed) return
-        closed = true; frameScheduler.shutdownNow(); panel.close(); menu.close()
+        closed = true; frameScheduler.shutdownNow(); spout?.close(); panel.close(); menu.close()
         pointerPresence?.close(); globalPointer?.close(); inputRegion?.close(); window.dispose()
     }
 }

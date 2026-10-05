@@ -31,6 +31,25 @@ dependencies {
     implementation("com.google.code.gson:gson:2.11.0")
     implementation(compose.desktop.currentOs)
     metadataSources("net.jthink:jaudiotagger:3.0.1:sources")
+    testImplementation(kotlin("stdlib"))
+}
+
+// Spout2 verification entry points (Windows; spoutChecks also runs headless elsewhere).
+tasks.register<JavaExec>("spoutChecks") {
+    dependsOn(tasks.testClasses)
+    classpath = sourceSets.test.get().runtimeClasspath
+    mainClass.set("io.github.gaboron.spwisland.ui.SpoutChecksKt")
+}
+tasks.register<JavaExec>("spoutSoak") {
+    dependsOn(tasks.testClasses)
+    classpath = sourceSets.test.get().runtimeClasspath
+    mainClass.set("io.github.gaboron.spwisland.ui.SpoutSoak")
+    args(providers.gradleProperty("soakSeconds").orElse("660").get())
+}
+tasks.register<JavaExec>("spoutLifecycle") {
+    dependsOn(tasks.testClasses)
+    classpath = sourceSets.test.get().runtimeClasspath
+    mainClass.set("io.github.gaboron.spwisland.ui.SpoutLifecycle")
 }
 val gnomePointer = tasks.register<Zip>("gnomePointer") {
     archiveFileName.set("spw-island-pointer@gaboron.github.io.shell-extension.zip")
@@ -43,8 +62,10 @@ tasks.processResources {
     if (isWindows) {
         dependsOn("buildSpectrum")
         dependsOn("buildWindowsTray")
+        dependsOn("buildSpout")
         from(layout.buildDirectory.file("native/spw-spectrum.exe")) { into("native") }
         from(layout.buildDirectory.file("native/spw-island-tray.exe")) { into("native") }
+        from(layout.buildDirectory.file("native/spw-spout.dll")) { into("native") }
         from({ zipTree(configurations.runtimeClasspath.get().single {
             it.name.startsWith("skiko-awt-runtime-windows-x64-")
         }) }) {
@@ -75,10 +96,10 @@ tasks.jar {
 tasks.register<Zip>("sourceArchive") {
     archiveFileName.set("spw-island-${project.version}-source.zip")
     destinationDirectory.set(layout.buildDirectory.dir("distributions"))
-    from("src") { into("src"); exclude("test/**", "**/__pycache__/**", "**/*.pyc") }
+    from("src") { into("src"); exclude("**/__pycache__/**", "**/*.pyc") }
     from("native") {
         into("native")
-        exclude("**/bin/**", "**/obj/**")
+        exclude("**/bin/**", "**/obj/**", "spout/build/**")
     }
     from("gradle") { into("gradle") }
     from("licenses") { into("licenses") }
@@ -112,6 +133,23 @@ tasks.register<Exec>("buildWindowsTray") {
     args("/nologo", "/target:winexe", "/platform:x64", "/optimize+",
         "/reference:System.Windows.Forms.dll", "/reference:System.Drawing.dll",
         "/out:${output.get().asFile.absolutePath}", file("native/Tray.cs").absolutePath)
+}
+
+tasks.register<Exec>("configureSpout") {
+    onlyIf { isWindows }
+    inputs.files(fileTree("native/spout"))
+    outputs.file(layout.buildDirectory.file("spout/CMakeCache.txt"))
+    commandLine("cmake", "-S", "native/spout", "-B", "build/spout", "-A", "x64")
+}
+tasks.register<Exec>("buildSpout") {
+    dependsOn("configureSpout")
+    onlyIf { isWindows }
+    inputs.files(fileTree("native/spout"))
+    outputs.file(layout.buildDirectory.file("native/spw-spout.dll"))
+    commandLine("cmake", "--build", "build/spout", "--config", "Release", "--parallel", "4")
+    doLast {
+        copy { from("build/spout/Release/spw-spout.dll"); into("build/native") }
+    }
 }
 
 fun registerPluginArchive(taskName: String, platform: String, enabled: Boolean) = tasks.register<Zip>(taskName) {

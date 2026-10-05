@@ -4,6 +4,9 @@
 
 <h1 align="center">灵动词岛 for SPW</h1>
 
+> 本地扩展版 `0.12.0-spout.1`：基于上游 0.12.0，保留 OBS Spout2 透明输出，桌面隐藏后仍可显示歌词。
+> 安装和设置见 [OBS Spout2 使用说明](docs/obs-spout2.md)。
+
 <p align="center">为 Salt Player for Windows 制作的桌面歌词词岛。</p>
 
 <p align="center">

@@ -188,6 +188,56 @@
           "summary": "从本地音频内嵌封面或同目录 cover/folder 图片取色，无封面时使用默认颜色。"
         },
         {
+          "type": "switch",
+          "key": "spout_enabled",
+          "title": "OBS / Spout2 输出",
+          "default_value": false,
+          "summary": "独立透明画面；桌面隐藏或全屏时继续显示。OBS 需要 Spout2 Capture 接收插件。"
+        },
+        {
+          "type": "edittext",
+          "key": "spout_name",
+          "title": "Spout2 发送器名称",
+          "default_value": "SPW Lyrics Island",
+          "summary": "使用英文、数字或空格；修改后在 OBS 重新选择发送器。"
+        },
+        {
+          "type": "list",
+          "key": "spout_fps",
+          "title": "Spout2 帧率",
+          "entries": [
+            "30 FPS",
+            "60 FPS"
+          ],
+          "entry_values": [
+            "30",
+            "60"
+          ],
+          "default_value": "60",
+          "summary": "低性能模式固定约 15 FPS。"
+        },
+        {
+          "type": "edittext",
+          "key": "spout_width",
+          "title": "Spout2 画布宽度",
+          "default_value": "1280",
+          "summary": "320–3840 像素，固定画布，词岛居中。"
+        },
+        {
+          "type": "edittext",
+          "key": "spout_height",
+          "title": "Spout2 画布高度",
+          "default_value": "512",
+          "summary": "128–2160 像素，保留透明背景。"
+        },
+        {
+          "type": "edittext",
+          "key": "spout_adapter",
+          "title": "Spout2 显卡编号",
+          "default_value": "-1",
+          "summary": "-1 自动，0 为第一张 DXGI 显卡。必须与 OBS 使用同一张显卡；出错后重新开关输出。"
+        },
+        {
           "type": "button",
           "title": "重置设置",
           "summary": "将所有词岛设置、字体和位置恢复为默认值；设置页中的数值可能需要重新打开后才会更新。",

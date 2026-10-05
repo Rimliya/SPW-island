@@ -1,0 +1,23 @@
+cmake_minimum_required(VERSION 3.20)
+project(spw_spout LANGUAGES CXX)
+if(NOT WIN32 OR NOT CMAKE_SIZEOF_VOID_P EQUAL 8)
+  message(FATAL_ERROR "spw-spout requires Windows x64")
+endif()
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+add_library(spout_sdk STATIC
+  vendor/SpoutDX.cpp vendor/SpoutCopy.cpp vendor/SpoutDirectX.cpp
+  vendor/SpoutFrameCount.cpp vendor/SpoutSenderNames.cpp
+  vendor/SpoutSharedMemory.cpp vendor/SpoutUtils.cpp)
+target_include_directories(spout_sdk PUBLIC vendor)
+target_compile_definitions(spout_sdk PUBLIC SPOUT_BUILD_STATIC _CRT_SECURE_NO_WARNINGS)
+target_link_libraries(spout_sdk PUBLIC d3d11 dxgi d3d9 winmm version shlwapi comctl32 opengl32)
+add_library(spw-spout SHARED bridge.cpp)
+target_link_libraries(spw-spout PRIVATE spout_sdk)
+target_compile_options(spw-spout PRIVATE /W4 /utf-8)
+install(TARGETS spw-spout RUNTIME DESTINATION .)
+option(SPW_SPOUT_PROBE "Build the development texture receiver" OFF)
+if(SPW_SPOUT_PROBE)
+  add_executable(spout-probe probe.cpp)
+  target_link_libraries(spout-probe PRIVATE spout_sdk)
+endif()

@@ -46,6 +46,15 @@ class HostSettings(private val manager: ConfigManager, private val changed: () -
         if (migrated) check(saveConfig()) { "词岛旧设置迁移失败，请检查 SPW 配置目录权限。" }
     }
     private fun decode(): IslandSettings = IslandSettings(
+        spout = SpoutSettings(
+            enabled = Platform.isWindows() && config.get<Any>("spout_enabled", false) == true,
+            name = config.get<Any>("spout_name", "SPW Lyrics Island").toString()
+                .filter { it in ' '..'~' }.take(128).trim().ifBlank { "SPW Lyrics Island" },
+            fps = if (number("spout_fps", 60, 30, 60) == 30) 30 else 60,
+            width = number("spout_width", 1280, 320, 3840),
+            height = number("spout_height", 512, 128, 2160),
+            adapter = number("spout_adapter", -1, -1, 31)
+        ),
         // An incomplete settings write must not change an accepted visibility policy.
         enabled = config.get("enabled", accepted?.enabled ?: true), translation = config.get("translation", true),
         karaoke = config.get("karaoke", true),
