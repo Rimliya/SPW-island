@@ -15,11 +15,10 @@ val workshop = "com.github.Moriafly:spw-workshop-api:0.1.0-dev20"
 val projectUrl = providers.gradleProperty("projectUrl")
 val currentOs = OperatingSystem.current()
 val targetPlatform = providers.gradleProperty("targetPlatform").orNull
-require(targetPlatform == null || targetPlatform == "windows" || targetPlatform == "linux") {
-    "targetPlatform must be windows or linux"
+require(targetPlatform == null || targetPlatform == "windows") {
+    "targetPlatform must be windows; this fork only builds the Windows plugin"
 }
 val isWindows = targetPlatform?.let { it == "windows" } ?: currentOs.isWindows
-val isLinux = targetPlatform?.let { it == "linux" } ?: currentOs.isLinux
 val metadataSources by configurations.creating { isTransitive = false }
 dependencies {
     compileOnly(kotlin("stdlib"))
@@ -51,12 +50,6 @@ tasks.register<JavaExec>("spoutLifecycle") {
     classpath = sourceSets.test.get().runtimeClasspath
     mainClass.set("io.github.gaboron.spwisland.ui.SpoutLifecycle")
 }
-val gnomePointer = tasks.register<Zip>("gnomePointer") {
-    archiveFileName.set("spw-island-pointer@gaboron.github.io.shell-extension.zip")
-    destinationDirectory.set(layout.buildDirectory.dir("distributions"))
-    from("src/linux/resources/native/gnome-pointer")
-    from("LICENSE")
-}
 tasks.processResources {
     from("native/shared-fonts/MiSansVF.ttf") { into("fonts") }
     if (isWindows) {
@@ -72,11 +65,6 @@ tasks.processResources {
             into("native/compose")
             include("skiko-windows-x64.dll", "icudtl.dat")
         }
-    } else if (isLinux) {
-        dependsOn(gnomePointer)
-        exclude { it.file == file("src/main/resources/preference_config.json") }
-        from("src/linux/resources") { exclude("**/__pycache__/**", "**/*.pyc", "native/gnome-pointer/**") }
-        from(gnomePointer) { into("native") }
     }
     inputs.property("projectUrl", projectUrl)
     filesMatching("project.properties") { expand("projectUrl" to projectUrl.get()) }
@@ -173,15 +161,7 @@ fun registerPluginArchive(taskName: String, platform: String, enabled: Boolean) 
     into("lib") {
         from(configurations.runtimeClasspath) {
             eachFile {
-                if (platform == "linux" &&
-                    !file.name.startsWith("jna-") &&
-                    !file.name.startsWith("jna-platform-") &&
-                    !file.name.startsWith("jaudiotagger-") &&
-                    !file.name.startsWith("gson-")) {
-                    exclude()
-                } else {
-                    name = libraryNames[file.canonicalPath] ?: name
-                }
+                name = libraryNames[file.canonicalPath] ?: name
             }
         }
     }
@@ -191,13 +171,9 @@ fun registerPluginArchive(taskName: String, platform: String, enabled: Boolean) 
 }
 
 val pluginWindows = registerPluginArchive("pluginWindows", "windows", isWindows)
-val pluginLinux = registerPluginArchive("pluginLinux", "linux", isLinux)
 
 tasks.register("plugin") {
     group = "build"
-    description = "Builds the plugin archive for the current host platform."
-    dependsOn(if (isWindows) pluginWindows else pluginLinux)
-    doFirst {
-        check(isWindows || isLinux) { "Only Windows and Linux plugin archives are supported" }
-    }
+    description = "Builds the Windows plugin archive. This fork only supports Windows."
+    dependsOn(pluginWindows)
 }

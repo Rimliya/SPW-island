@@ -14,4 +14,4 @@ dependencyResolutionManagement {
         maven("https://jitpack.io") { content { includeGroup("com.github.Moriafly") } }
     }
 }
-rootProject.name = "dynamic-lyrics-island-for-spw"
+rootProject.name = "SPW-island"

@@ -4,6 +4,12 @@
 `SpoutRenderer`/`SpoutOutput` 负责独立离屏绘制与调度；`SpoutSender` 管理有界帧缓冲、
 JNA 与原生所属线程；`native/spout` 构建 D3D11 发送桥。详见 [OBS Spout2](obs-spout2.md)。
 
+> [!IMPORTANT]
+> 本 fork 只构建、分发和验证 **Windows x64**。上游的 Linux 代码路径（`LinuxIslandProcess`、
+> `LinuxIslandMain`、X11 / KDE / GNOME 指针桥、PipeWire 频谱、GTK 托盘等）仍保留在源码中，
+> 便于日后对照上游，但本 fork 不再构建、不再提供 Linux 包，`src/linux/resources` 已删除。
+> 本文中所有标注 Linux 的章节只描述上游保留代码，不代表本 fork 的支持范围。
+
 本文面向希望了解、修改或贡献灵动词岛 for SPW 的开发者。
 
 如果只是安装或使用插件，请阅读：
@@ -599,7 +605,7 @@ IslandLeadingContent / IslandTrailingContent
 
 ### 4.10 Linux Python bridge
 
-`src/linux/resources/native/island-linux.py` 是 Linux 桌面辅助桥。
+`src/linux/resources/native/island-linux.py` 是上游的 Linux 桌面辅助桥（本 fork 已删除该目录，此节仅作对照）。
 
 它只使用 Python 标准库，通过 `ctypes` 调用系统共享库。
 
@@ -627,7 +633,7 @@ GTK 与 Swing/AWT 不在同一个 JVM 中初始化，以减少线程和桌面工
 
 KWin 桥接通过会话 D-Bus 加载临时脚本，每 50 ms 更新指针。关闭功能、退出或连接失效时卸载脚本，桥接进程消失时脚本也会自行卸载；连接断开后尝试重连。
 
-GNOME Wayland 使用 `SPW Island Pointer` 扩展，支持 GNOME 45–50。扩展按需调用 `global.get_pointer()`，通过只读 D-Bus 方法返回坐标。`install-gnome-pointer.py` 安装扩展，备份已有版本并保留其他扩展设置；首次安装或更新后需重新登录。扩展源码位于 `src/linux/resources/native/gnome-pointer/`，由 `gnomePointer` 任务生成 ZIP 并装入 Linux 插件资源。
+GNOME Wayland 使用 `SPW Island Pointer` 扩展，支持 GNOME 45–50。扩展按需调用 `global.get_pointer()`，通过只读 D-Bus 方法返回坐标。`install-gnome-pointer.py` 安装扩展，备份已有版本并保留其他扩展设置；首次安装或更新后需重新登录。扩展源码位于 `src/linux/resources/native/gnome-pointer/`，上游由 `gnomePointer` 任务生成 ZIP 并装入 Linux 插件资源；本 fork 已删除该目录和对应任务。
 
 #### PipeWire 频谱
 
@@ -642,7 +648,7 @@ GNOME Wayland 使用 `SPW Island Pointer` 扩展，支持 GNOME 45–50。扩展
 | 路径 | 职责 |
 | --- | --- |
 | `src/main/resources/preference_config.json` | Windows/SPW 插件配置页声明 |
-| `src/linux/resources/preference_config.json` | Linux 配置页声明，移除平台未支持项目 |
+| `src/linux/resources/preference_config.json` | 上游 Linux 配置页声明（本 fork 已删除） |
 | `src/main/resources/META-INF/extensions.idx` | 显式注册 `IslandPlaybackExtension` |
 | `src/main/resources/project.properties` | 构建时写入项目源代码地址 |
 | `native/shared-fonts/MiSansVF.ttf` | 两平台共用的 MiSans，可在构建时加入歌词、菜单和字体窗口资源 |
@@ -866,7 +872,7 @@ Linux 捕获/算法：
 
 ```text
 LinuxProcessSpectrum
-src/linux/resources/native/island-spectrum.py
+src/linux/resources/native/island-spectrum.py（本 fork 已删除）
 IslandWire / RemoteSpectrum
 ```
 
@@ -915,7 +921,7 @@ IslandMenuCommands
 Linux 平台还要确认：
 
 ```text
-src/linux/resources/preference_config.json
+src/linux/resources/preference_config.json（本 fork 已删除）
 RemoteSettingsStore
 ```
 
@@ -1379,21 +1385,14 @@ native/*.cs
 
 构建实时频谱 helper。
 
-### Linux x64
-
-```bash
-./gradlew pluginLinux --no-daemon
-```
-
-### 当前平台
-
-也可以使用：
+### 插件包
 
 ```text
 gradlew plugin
 ```
 
-由构建脚本选择当前平台对应的插件任务。
+`plugin` 等价于 `pluginWindows`。上游的 `pluginLinux` 任务、`gnomePointer` 任务和
+`src/linux/resources` 资源目录已在本 fork 中移除，构建脚本只接受 `targetPlatform=windows`。
 
 输出位于：
 
