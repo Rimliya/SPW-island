@@ -59,6 +59,6 @@ its corresponding upstream source JAR is included in source/.
 
 MiSans VF, Copyright Xiaomi.
 https://hyperos.mi.com/font
-Bundled for default Windows/Linux lyric and plugin UI text, both Windows right-click menus,
+Bundled for default lyric and plugin UI text, both Windows right-click menus,
 and the font picker preview.
 License terms accompany the distribution in licenses/MiSans-License.pdf.

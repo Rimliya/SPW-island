@@ -8,13 +8,13 @@
 | --- | --- |
 | 下载哪个包、怎么安装和更新 | [安装与更新](installation.md) |
 | 词岛怎么操作、设置项有什么用 | [使用与设置](usage.md) |
-| Windows / Linux 分别支持哪些功能 | [兼容性与限制](compatibility.md) |
+| 支持哪些功能和平台差异 | [兼容性与限制](compatibility.md) |
 | 词岛不显示、歌词异常、频谱不动等问题 | [故障排查](troubleshooting.md) |
 | 架构、代码地图、构建和贡献 | [开发指南](development.md) |
 | OBS 透明歌词（本地 Spout2 扩展） | [OBS Spout2 使用说明](obs-spout2.md) |
 
 ## 常用入口
 
-- [下载最新版本](https://github.com/GaBoron/SPW-island/releases/latest)
-- [提交 Issue](https://github.com/GaBoron/SPW-island/issues)
+- [下载最新版本（本 fork）](https://github.com/Rimliya/SPW-island/releases/latest)
+- [提交 Issue（上游仓库）](https://github.com/GaBoron/SPW-island/issues)
 - [SPW-Lyrics](https://github.com/GaBoron/SPW-Lyrics)：可选的歌词获取插件
