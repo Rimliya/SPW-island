@@ -160,7 +160,7 @@
           "type": "switch",
           "key": "background_cover_color",
           "title": "背景使用封面颜色",
-          "default_value": false,
+          "default_value": true,
           "summary": "从本地音频内嵌封面或同目录 cover/folder 图片取色，无封面时使用默认颜色。"
         },
         {
@@ -184,14 +184,14 @@
           "type": "switch",
           "key": "spectrum_cover_color",
           "title": "频谱使用封面颜色",
-          "default_value": false,
+          "default_value": true,
           "summary": "从本地音频内嵌封面或同目录 cover/folder 图片取色，无封面时使用默认颜色。"
         },
         {
           "type": "switch",
           "key": "spout_enabled",
           "title": "OBS / Spout2 输出",
-          "default_value": false,
+          "default_value": true,
           "summary": "独立透明画面；桌面隐藏或全屏时继续显示。OBS 需要 Spout2 Capture 接收插件。"
         },
         {
@@ -213,8 +213,8 @@
             "30",
             "60"
           ],
-          "default_value": "60",
-          "summary": "低性能模式固定约 15 FPS。"
+          "default_value": "30",
+          "summary": "低性能模式固定约 15 FPS。选项可选 30 FPS / 60 FPS。"
         },
         {
           "type": "edittext",

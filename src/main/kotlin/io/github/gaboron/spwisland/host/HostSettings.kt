@@ -47,10 +47,10 @@ class HostSettings(private val manager: ConfigManager, private val changed: () -
     }
     private fun decode(): IslandSettings = IslandSettings(
         spout = SpoutSettings(
-            enabled = Platform.isWindows() && config.get<Any>("spout_enabled", false) == true,
+            enabled = Platform.isWindows() && config.get<Any>("spout_enabled", true) == true,
             name = config.get<Any>("spout_name", "SPW Lyrics Island").toString()
                 .filter { it in ' '..'~' }.take(128).trim().ifBlank { "SPW Lyrics Island" },
-            fps = if (number("spout_fps", 60, 30, 60) == 30) 30 else 60,
+            fps = if (number("spout_fps", 30, 30, 60) == 30) 30 else 60,
             width = number("spout_width", 1280, 320, 3840),
             height = number("spout_height", 512, 128, 2160),
             adapter = number("spout_adapter", -1, -1, 31)
@@ -67,9 +67,9 @@ class HostSettings(private val manager: ConfigManager, private val changed: () -
         lowPerformance = config.get("reduced_motion", false), notch = config.get("shape", "pill") == "notch",
         cornerRoundness = number("corner_roundness", 60, 0, 100),
         lyricCoverColor = config.get("lyric_cover_color", false),
-        backgroundCoverColor = config.get("background_cover_color", false),
+        backgroundCoverColor = config.get("background_cover_color", true),
         backgroundProgress = backgroundProgressMode(),
-        spectrumCoverColor = config.get("spectrum_cover_color", false),
+        spectrumCoverColor = config.get("spectrum_cover_color", true),
         fixedWidth = config.get("fixed_width", false),
         sideContent = when (config.get("leading_content", "cover_spectrum")) {
             "spectrum" -> SideContent.SPECTRUM
