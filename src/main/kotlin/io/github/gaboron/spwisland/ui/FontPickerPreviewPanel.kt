@@ -18,8 +18,8 @@ internal class FontPickerPreviewPanel(private val current: IslandSettings) : JPa
     var family = current.fontFamily
     var weight = current.fontWeight
     var fontSize = current.fontSize
-    var primary = "Not yet for the story on the last page"
-    var translation = "还未到将故事翻至末页的时候"
+    var primary = "May you, the beauty of this world, always shine."
+    var translation = "你便是世界上的美好，永远闪耀。"
 
     private val island = IslandPanel(object : PlaybackActions {
         override fun previous() = Unit
@@ -39,7 +39,7 @@ internal class FontPickerPreviewPanel(private val current: IslandSettings) : JPa
         val line = LyricLine(0, 10000, primary.ifBlank { " " }, translation.takeIf { it.isNotBlank() }, emptyList())
         island.settings = current.copy(fontFamily = family, fontWeight = weight, fontSize = fontSize)
         island.snapshot = PlaybackSnapshot(
-            Track("Rubia", "周深", ""),
+            Track("Da Capo", "HOYO-MiX", ""),
             line, 3000, true, PlaybackStatus.READY, lyrics = listOf(line)
         )
         val bounds = island.desiredSize((width - 24).coerceAtLeast(1))

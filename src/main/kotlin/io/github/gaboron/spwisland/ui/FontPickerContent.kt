@@ -64,8 +64,8 @@ internal fun FontPickerContent(current: IslandSettings, onCancel: () -> Unit, on
     var selected by remember { mutableStateOf(current.fontFamily) }
     var faceName by remember { mutableStateOf(current.fontFamily) }
     var weight by remember { mutableStateOf(current.fontWeight) }
-    var primary by remember { mutableStateOf("Not yet for the story on the last page") }
-    var translation by remember { mutableStateOf("还未到将故事翻至末页的时候") }
+    var primary by remember { mutableStateOf("May you, the beauty of this world, always shine.") }
+    var translation by remember { mutableStateOf("你便是世界上的美好，永远闪耀。") }
     var refresh by remember { mutableStateOf(0) }
 
     LaunchedEffect(refresh) {
