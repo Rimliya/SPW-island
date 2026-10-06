@@ -18,8 +18,8 @@ internal class FontPickerPreviewPanel(private val current: IslandSettings) : JPa
     var family = current.fontFamily
     var weight = current.fontWeight
     var fontSize = current.fontSize
-    var primary = "Twinkle, twinkle, little star"
-    var translation = "一闪一闪亮晶晶"
+    var primary = "Not yet for the story on the last page"
+    var translation = "还未到将故事翻至末页的时候"
 
     private val island = IslandPanel(object : PlaybackActions {
         override fun previous() = Unit
@@ -39,7 +39,7 @@ internal class FontPickerPreviewPanel(private val current: IslandSettings) : JPa
         val line = LyricLine(0, 10000, primary.ifBlank { " " }, translation.takeIf { it.isNotBlank() }, emptyList())
         island.settings = current.copy(fontFamily = family, fontWeight = weight, fontSize = fontSize)
         island.snapshot = PlaybackSnapshot(
-            Track("Twinkle, Twinkle, Little Star", "Traditional", ""),
+            Track("Rubia", "周深", ""),
             line, 3000, true, PlaybackStatus.READY, lyrics = listOf(line)
         )
         val bounds = island.desiredSize((width - 24).coerceAtLeast(1))
