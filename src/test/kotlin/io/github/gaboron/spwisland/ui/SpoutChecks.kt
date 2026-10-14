@@ -53,9 +53,18 @@ fun main() {
             ((it ushr 16) and 255) <= alpha && ((it ushr 8) and 255) <= alpha && (it and 255) <= alpha }
 
         val a = native(settings)
-        val hidden = native(settings.copy(enabled = false, hidePaused = true, hideFullscreen = true,
-            autoHideOnHover = true, clickThrough = true, positionX = 9999, positionY = -9999))
-        check(a.contentEquals(hidden)) { "Desktop visibility or position altered output" }
+        // Desktop-only switches must not reach the independent output. Word geometry is prepared on a
+        // background worker, so the first frames still render through the timed fallback; re-render the
+        // pair until both observe the warmed state instead of comparing two rendering paths.
+        val hiddenSettings = settings.copy(enabled = false, hidePaused = true, hideFullscreen = true,
+            autoHideOnHover = true, clickThrough = true, positionX = 9999, positionY = -9999)
+        var shown = a
+        var hidden = native(hiddenSettings)
+        var attempts = 0
+        while (!shown.contentEquals(hidden) && attempts++ < 8) {
+            shown = native(settings); hidden = native(hiddenSettings)
+        }
+        check(shown.contentEquals(hidden)) { "Desktop visibility or position altered output" }
         check(a[0] == 0 && a.last() == 0) { "Canvas must have transparent corners" }
         check(a.any { (it ushr 24) in 1..254 }) { "Missing partial alpha" }
         check(a.any { (it ushr 24) > 200 }) { "Empty drawing" }
