@@ -7,6 +7,7 @@ import io.github.gaboron.spwisland.platform.SkikoRuntime
 import io.github.gaboron.spwisland.platform.SpoutSender
 import io.github.gaboron.spwisland.ui.gpu.IslandGpuFrame
 import io.github.gaboron.spwisland.ui.gpu.IslandGpuScene
+import io.github.gaboron.spwisland.ui.gpu.scoped
 import org.jetbrains.skia.ColorAlphaType
 import org.jetbrains.skia.ColorType
 import org.jetbrains.skia.ImageInfo

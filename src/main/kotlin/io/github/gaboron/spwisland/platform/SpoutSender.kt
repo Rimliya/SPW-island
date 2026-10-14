@@ -126,7 +126,7 @@ internal class SpoutSender(private val report: (Throwable) -> Unit) : AutoClosea
                         maxPaintNs = maxOf(maxPaintNs, lastPaintNs)
                         if (painted) {
                             val uploadStart = System.nanoTime()
-                            check(api!!.spw_spout_send(handle, memory, settings.width, settings.height) == 1) {
+                            check(api!!.spw_spout_send(handle, memory!!, settings.width, settings.height) == 1) {
                                 "Spout2 发送失败：${api.spw_spout_error()}。请重新开关输出。"
                             }
                             lastUploadNs = System.nanoTime() - uploadStart
