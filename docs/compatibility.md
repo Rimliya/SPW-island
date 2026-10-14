@@ -89,4 +89,8 @@
 
 内置 MiSans。歌词缺字时先尝试 MiSans，再回退到系统字体；系统仍无对应字形时才会显示缺字框。
 
+## 词岛绘制
+
+词岛使用 GPU 绘制，Windows 走 Direct3D；GPU 初始化失败时自动回退到兼容绘制，可在「关于与状态」确认是否启用。本 fork 只提供 Windows x64 包。
+
 如果上表中标记为支持的功能实际没有正常工作，请看 [故障排查](troubleshooting.md)。更底层的实现和平台架构放在 [开发指南](development.md)。

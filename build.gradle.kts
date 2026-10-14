@@ -20,6 +20,7 @@ require(targetPlatform == null || targetPlatform == "windows") {
 }
 val isWindows = targetPlatform?.let { it == "windows" } ?: currentOs.isWindows
 val metadataSources by configurations.creating { isTransitive = false }
+val skikoVersion = "0.150.1"
 dependencies {
     compileOnly(kotlin("stdlib"))
     compileOnly(workshop) { isTransitive = false }
@@ -29,6 +30,7 @@ dependencies {
     implementation("net.jthink:jaudiotagger:3.0.1")
     implementation("com.google.code.gson:gson:2.11.0")
     implementation(compose.desktop.currentOs)
+    implementation("org.jetbrains.skiko:skiko-awt:$skikoVersion")
     metadataSources("net.jthink:jaudiotagger:3.0.1:sources")
     testImplementation(kotlin("stdlib"))
 }

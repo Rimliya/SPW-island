@@ -6,7 +6,7 @@
 
 > [!NOTE]
 > 这是用于 **OBS Spout2 捕获** 的 fork，fork 自原作者仓库 [GaBoron/SPW-island](https://github.com/GaBoron/SPW-island)。
-> 本地扩展版 `0.12.0-spout.1`：基于上游 0.12.0，保留 OBS Spout2 透明输出，桌面隐藏后仍可显示歌词。
+> 本地扩展版 `0.12.1-spout.1`：基于上游 0.12.1（词岛改用 GPU 绘制），保留 OBS Spout2 透明输出，桌面隐藏后仍可显示歌词。
 > 本 fork 只构建和分发 Windows 包；安装和设置见 [OBS Spout2 使用说明](docs/obs-spout2.md)。
 
 <p align="center">为 Salt Player for Windows 制作的桌面歌词词岛。</p>
@@ -23,6 +23,7 @@
 
 ## 功能
 
+- 词岛使用 GPU 绘制（Skiko / Direct3D），GPU 不可用时自动回退到兼容绘制；
 - 逐字高亮、翻译、长音强调、辉光和歌词切换动效；
 - 胶囊 / 刘海外观，支持圆角、宽度、透明度、字体和多种封面取色；
 - 悬停展开上一首、播放 / 暂停、下一首和可拖动进度条；

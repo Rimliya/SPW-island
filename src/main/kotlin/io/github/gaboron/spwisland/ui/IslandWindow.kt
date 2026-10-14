@@ -13,6 +13,7 @@ import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 import kotlin.math.abs
 import kotlin.math.roundToInt
+import io.github.gaboron.spwisland.ui.gpu.IslandGpuRenderer
 
 private fun overlayGraphicsConfiguration(): GraphicsConfiguration {
     val device = GraphicsEnvironment.getLocalGraphicsEnvironment().defaultScreenDevice
@@ -29,7 +30,6 @@ class IslandWindow(private val timeline: PlaybackSource, private val store: Sett
                    private val spectrumFallback: () -> Boolean = { false },
                    private val spectrumStatus: () -> String = { "" }) : AutoCloseable {
     companion object {
-        private const val DRAG_FRAME_DELAY_MS = 8
         private const val HOVER_MARGIN = 18
     }
     // A persistent overlay is a frame, not an AWT popup (SunAwtWindow).
@@ -54,6 +54,7 @@ class IslandWindow(private val timeline: PlaybackSource, private val store: Sett
     // Independent OBS output: its own collapsed panel, unaffected by desktop visibility or hover state.
     private val spout = if (Platform.isWindows()) SpoutOutput(report) else null
     private val surface = IslandSurface(panel)
+    private val renderer = IslandGpuRenderer(window, surface, report)
     private val hoverVisibility = IslandHoverVisibility()
     private val expandedMotion = IslandExpandedMotion()
     private val native = WindowsOverlay()
@@ -67,7 +68,8 @@ class IslandWindow(private val timeline: PlaybackSource, private val store: Sett
             surface.hoverPose.reveal < .01, fullscreen, inputRegion != null || native.supportsClickThrough && nativeAvailable,
             if (globalPointer != null) globalPointer.location() != null else
                 runCatching { MouseInfo.getPointerInfo() != null }.getOrDefault(false),
-            globalPointer?.status.orEmpty(), spectrumFallback(), spectrumStatus())
+            globalPointer?.status.orEmpty(), spectrumFallback(), spectrumStatus(),
+            renderer.active, renderer.fallbackRendering)
     }
     private var settings = store.read()
     private var nativeAvailable = true
@@ -89,13 +91,15 @@ class IslandWindow(private val timeline: PlaybackSource, private val store: Sett
 
     private var canvasWidth = 0
     private var canvasHeight = 0
+    private var buffersReleased = false
     private var dragTopLeft: Point? = null
     private var dragAnchor: IslandAnchor? = null
     private var press: Point? = null
     private var dragOrigin: Point? = null
     private var dragging = false
     private var placementAnchor = settings.positionAnchor ?: IslandAnchor.TOP_CENTER
-    @Volatile private var frameDelayMs = 16
+    private val frameClock = IslandFrameClock()
+    @Volatile private var frameInterval = 16_666_666L
     private val frameScheduler = Executors.newSingleThreadScheduledExecutor { task ->
         Thread(task, "SPW Island frame scheduler").apply { isDaemon = true }
     }
@@ -111,7 +115,7 @@ class IslandWindow(private val timeline: PlaybackSource, private val store: Sett
                     press = e.locationOnScreen
                     dragOrigin = Point(window.x + panel.x, window.y + panel.y)
                     dragAnchor = placementAnchor
-                    frameDelayMs = DRAG_FRAME_DELAY_MS
+                    frameInterval = frameClock.interval(window.graphicsConfiguration.device, settings.performance)
                 }
             }
             override fun mouseReleased(e: MouseEvent) {
@@ -158,6 +162,8 @@ class IslandWindow(private val timeline: PlaybackSource, private val store: Sett
         })
         // Allocate a native peer while hidden, so full-screen checks also work before first show.
         window.addNotify()
+        if (settings.enabled) renderer.install()
+        window.gpuRendering = renderer.active
         try { menu.installTray() } catch (error: Exception) { report(error) }
         tick(); scheduleNextFrame()
     }
@@ -171,11 +177,11 @@ class IslandWindow(private val timeline: PlaybackSource, private val store: Sett
         tick()
     }
     fun about() = menu.about()
-    internal val presentedFrames: Long get() = window.presentedFrames
+    internal val presentedFrames: Long get() = renderer.frames + window.presentedFrames
 
     private fun tick() {
         tickDesktop()
-        if (!closed) spout?.nextDelayMs()?.let { frameDelayMs = minOf(frameDelayMs, it) }
+        if (!closed) spout?.nextDelayMs()?.let { frameInterval = minOf(frameInterval, it * 1_000_000L) }
     }
 
     private fun tickDesktop() {
@@ -183,6 +189,7 @@ class IslandWindow(private val timeline: PlaybackSource, private val store: Sett
         // Local optimistic edits must take effect even before the next host notification.
         settings = store.read()
         val now = System.nanoTime()
+        frameClock.frameStarted(now)
         val controlsBlocked = menu.aboutVisible
         pointerPresence?.setSuppressed(controlsBlocked)
         val dt = ((now - lastFrame) / 1_000_000_000.0).coerceIn(0.0, .1)
@@ -191,7 +198,7 @@ class IslandWindow(private val timeline: PlaybackSource, private val store: Sett
         val clickThrough = (settings.clickThrough || settings.autoHideOnHover) &&
             (native.supportsClickThrough || inputRegion != null)
         val snap = timeline.snapshot()
-        if (nativeAvailable && now >= nextScreenCheck) {
+        if (settings.enabled && nativeAvailable && now >= nextScreenCheck) {
             try { fullscreen = settings.hideFullscreen && native.foregroundIsFullscreen(window) }
             catch (error: Exception) { nativeAvailable = false; fullscreen = false; report(error) }
             nextScreenCheck = now + performance.screenCheckIntervalNs
@@ -208,15 +215,23 @@ class IslandWindow(private val timeline: PlaybackSource, private val store: Sett
         if (!visible) {
             // Avoid changing the native bounds or painting while the transparent peer is hidden.
             if (window.isVisible) window.isVisible = false
+            if (!settings.enabled && !buffersReleased) {
+                panel.releaseBuffers(); window.releaseFrame()
+                renderer.release(); window.gpuRendering = false
+                canvasWidth = 0; canvasHeight = 0
+                buffersReleased = true
+            }
             surface.hoverPose = IslandHoverMotion.Pose.HIDDEN
             hoverVisibility.update(false, null, Rectangle(), dt, true, settings.notch)
             hoverActive = false
             pointerPresence?.reset()
             nextTopmostCheck = 0
-            frameDelayMs = 200
+            frameInterval = 200_000_000L
             return
         }
+        buffersReleased = false
         panel.settings = settings; panel.snapshot = snap
+        renderer.install(); window.gpuRendering = renderer.active
         panel.updateSpectrum(levels, dt)
 
         val devices = GraphicsEnvironment.getLocalGraphicsEnvironment().screenDevices
@@ -329,23 +344,25 @@ class IslandWindow(private val timeline: PlaybackSource, private val store: Sett
             try { native.clickThrough(window, clickThrough); clickThroughApplied = clickThrough }
             catch (error: Exception) { nativeAvailable = false; report(error) }
         }
-        if (Platform.isLinux()) {
+        if (renderer.active) renderer.draw()
+        else if (Platform.isLinux()) {
             // The isolated Linux JVM uses XRender, and publishes one complete buffered frame.
             // Never clear the on-screen drawable or reshape it during layout animation.
             window.graphics?.let { graphics ->
                 try { window.paint(graphics) } finally { graphics.dispose() }
             }
         } else surface.repaint()
-        frameDelayMs = when {
-            press != null -> DRAG_FRAME_DELAY_MS
-            !performance.animateLayout -> performance.frameDelayMs
-            hoverVisibility.animating || expandedMotion.animating || panel.progressAnimating -> performance.frameDelayMs
-            !snap.playing && panel.transition >= 1 && width == desired.width.toDouble() && height == desired.height.toDouble() -> 50
-            else -> performance.frameDelayMs
+        val displayInterval = frameClock.interval(device, performance)
+        frameInterval = when {
+            press != null || !performance.animateLayout -> displayInterval
+            hoverVisibility.animating || expandedMotion.animating || panel.progressAnimating -> displayInterval
+            !snap.playing && panel.transition >= 1 && width == desired.width.toDouble() && height == desired.height.toDouble() ->
+                maxOf(displayInterval, 50_000_000L)
+            else -> displayInterval
         }
     }
 
-    /** Schedule from the completed EDT frame, with at most one outstanding frame. */
+    /** Keep one outstanding frame and avoid adding rendering time to the target interval. */
     private fun scheduleNextFrame() {
         if (closed) return
         frameScheduler.schedule({
@@ -355,7 +372,7 @@ class IslandWindow(private val timeline: PlaybackSource, private val store: Sett
                 tick()
                 scheduleNextFrame()
             }
-        }, frameDelayMs.toLong(), TimeUnit.MILLISECONDS)
+        }, frameClock.delay(frameInterval), TimeUnit.NANOSECONDS)
     }
 
     private fun anchoredPosition(screen: Rectangle, deviceId: String, width: Int, height: Int): Pair<Point, IslandAnchor> {
@@ -387,7 +404,7 @@ class IslandWindow(private val timeline: PlaybackSource, private val store: Sett
 
     override fun close() {
         if (closed) return
-        closed = true; frameScheduler.shutdownNow(); spout?.close(); panel.close(); menu.close()
-        pointerPresence?.close(); globalPointer?.close(); inputRegion?.close(); window.dispose()
+        closed = true; frameScheduler.shutdownNow(); spout?.close(); renderer.close(); panel.close(); menu.close()
+        pointerPresence?.close(); globalPointer?.close(); inputRegion?.close(); window.releaseFrame(); window.dispose()
     }
 }
