@@ -40,6 +40,7 @@ tasks.register<JavaExec>("spoutChecks") {
     dependsOn(tasks.testClasses)
     classpath = sourceSets.test.get().runtimeClasspath
     mainClass.set("io.github.gaboron.spwisland.ui.SpoutChecksKt")
+    jvmArgs("-Djava.awt.headless=true")
 }
 tasks.register<JavaExec>("spoutSoak") {
     dependsOn(tasks.testClasses)
@@ -173,6 +174,9 @@ fun registerPluginArchive(taskName: String, platform: String, enabled: Boolean) 
 }
 
 val pluginWindows = registerPluginArchive("pluginWindows", "windows", isWindows)
+
+// The archive is only produced once the Spout renderer regressions pass; CI builds it on Windows.
+pluginWindows.configure { dependsOn("spoutChecks") }
 
 tasks.register("plugin") {
     group = "build"

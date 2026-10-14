@@ -45,23 +45,26 @@ python src/test/python/native_checks.py
 ```
 
 输出在 `build/distributions`。源码包包含原生桥、固定版本 SDK 必需源码及许可。
-`spoutChecks` 检查真实离屏绘制；`native_checks.py` 逐像素检查真实共享纹理。
+`spoutChecks` 检查真实离屏绘制（`pluginWindows` 会先运行它，失败则不产出安装包）；`native_checks.py` 逐像素检查真实共享纹理。
 `spoutSoak` 使用合成播放状态，不能替代真实 SPW 回调验收；发送器为 `SPW Spout Verification`。
-运行时每 10 秒向标准输出记录 `[SPW Spout]`：实际绘制 FPS、发送计数、丢弃数、绘制最大值/P95 和上传最大值。
+运行时每 10 秒向标准输出记录 `[SPW Spout]`：实际绘制 FPS、发送计数、丢弃数、绘制模式（`skia` / `java2d`）、
+绘制与上传最大值以及事件线程绘制 P95。
 
 ## 0.12.1 合并说明
 
-- 上游 0.11 起歌词布局改为“当前行同步测量 + 后台预热后续行”。`SpoutRenderer` 每帧调用 `prepareLyrics`，
-  并使用自己的 `IslandPanel` 预热线程；关闭或重配置输出时释放该线程。
+- 上游 0.11 起歌词布局改为“当前行同步测量 + 后台预热后续行”。`SpoutPresentation` 每帧调用 `prepareLyrics`，
+  并使用自己的 `IslandPanel` 预热线程；关闭输出时释放该线程。
 - 上游 0.12 的 `IslandWindow.tick()` 在桌面隐藏时提前返回。Spout2 帧在该返回之前生成，
   帧间隔取桌面调度与 Spout2 目标帧率的较小值，因此全屏 / 暂停 / 关闭显示时仍按设定帧率输出。
-- 上游 0.12.1 把桌面词岛改为 GPU（Skiko / Skia）绘制并把帧调度换成纳秒制的 `frameClock`。Spout 输出走独立的 Java2D `IslandPanel`，与桌面绘制路径解耦，因此不受影响；帧间隔仍取桌面调度与 Spout2 目标帧率的较小值。
-- 由于桌面用 Skia、Spout 用 Java2D 光栅化，OBS 画面与桌面观感可能存在细微的抗锯齿差异。
+- 上游 0.12.1 把桌面词岛改为 GPU（Skiko / Skia）绘制并把帧调度换成纳秒制的 `frameClock`。Spout 输出复用同一套
+  Skia 绘制代码（`IslandGpuScene`）和同一份 `IslandGpuFrame`，因此 OBS 画面与桌面观感一致；帧间隔仍取桌面调度与
+  Spout2 目标帧率的较小值。
 - 原生桥 `spw-spout.dll` 与接口未变；`0.10.0-spout.1` 中的 `SystemUiFont` 空字体快速路径已被上游同等实现取代，不再单独修改。
 
 ## 实现边界
 
-Java2D 在 Swing 事件线程绘制独立 `IslandPanel`，产生预乘 BGRA8 像素。
-后台线程通过 JNA 调用 `spw-spout.dll` 上传 D3D11 共享纹理；不是全程 GPU 零拷贝。
-最多三个可复用像素数组和一帧待发送数据，忙时替换旧待发送帧。
+Skia 光栅化直接写入发送器持有的原生 BGRA8 缓冲区（预乘、自上而下），一帧只光栅化一次。
+绘制与上传都在 `SPW Spout sender` 线程完成；Swing 事件线程只推进表现状态，不再逐像素绘制。
+上传仍经 D3D11 共享纹理（Skia 在 Windows 是 D3D12 后端），因此不是全程 GPU 零拷贝；
+真零拷贝需要新增 D3D12 到 D3D11 共享句柄的原生入口。回退路径保留可复用像素数组，忙时替换旧待发送帧。
 关闭、重配置、退出时均在原生所属线程释放设备与发送器。
