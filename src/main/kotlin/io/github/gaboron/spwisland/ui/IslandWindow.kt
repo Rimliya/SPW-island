@@ -28,7 +28,8 @@ class IslandWindow(private val timeline: PlaybackSource, private val store: Sett
                    actions: PlaybackActions, private val report: (Throwable) -> Unit,
                    private val spectrum: () -> FloatArray = { FloatArray(4) },
                    private val spectrumFallback: () -> Boolean = { false },
-                   private val spectrumStatus: () -> String = { "" }) : AutoCloseable {
+                   private val spectrumStatus: () -> String = { "" },
+                   private val notifyUser: (String, Boolean) -> Unit = { _, _ -> }) : AutoCloseable {
     companion object {
         private const val HOVER_MARGIN = 18
     }
@@ -97,6 +98,8 @@ class IslandWindow(private val timeline: PlaybackSource, private val store: Sett
     private var press: Point? = null
     private var dragOrigin: Point? = null
     private var dragging = false
+    private var suppressClick = false
+    private var spoutClickTimer: Timer? = null
     private var placementAnchor = settings.positionAnchor ?: IslandAnchor.TOP_CENTER
     private val frameClock = IslandFrameClock()
     @Volatile private var frameInterval = 16_666_666L
@@ -112,6 +115,7 @@ class IslandWindow(private val timeline: PlaybackSource, private val store: Sett
             override fun mousePressed(e: MouseEvent) {
                 if (!Platform.isLinux() && e.isPopupTrigger) menu.popup(panel, e.x, e.y)
                 if (SwingUtilities.isLeftMouseButton(e) && !settings.clickThrough && !settings.autoHideOnHover) {
+                    suppressClick = false
                     press = e.locationOnScreen
                     dragOrigin = Point(window.x + panel.x, window.y + panel.y)
                     dragAnchor = placementAnchor
@@ -139,7 +143,19 @@ class IslandWindow(private val timeline: PlaybackSource, private val store: Sett
                 dragging = false; press = null; dragOrigin = null; dragTopLeft = null; dragAnchor = null
             }
             override fun mouseClicked(e: MouseEvent) {
-                if (e.clickCount == 2 && SwingUtilities.isLeftMouseButton(e)) actions.toggle()
+                if (!SwingUtilities.isLeftMouseButton(e) || suppressClick) return
+                if (e.clickCount >= 2) {
+                    // Double click keeps the original play/pause gesture; cancel the pending Spout toggle.
+                    spoutClickTimer?.stop(); spoutClickTimer = null
+                    actions.toggle()
+                } else {
+                    // A single click on the lyric bar toggles Spout2 after the double-click window.
+                    spoutClickTimer?.stop()
+                    spoutClickTimer = Timer(260) {
+                        spoutClickTimer = null
+                        toggleSpoutOutput()
+                    }.apply { isRepeats = false; start() }
+                }
             }
         })
         panel.addMouseMotionListener(object : MouseMotionAdapter() {
@@ -149,6 +165,7 @@ class IslandWindow(private val timeline: PlaybackSource, private val store: Sett
                 val current = e.locationOnScreen
                 if (start.distance(current) < 4 && !dragging) return
                 dragging = true
+                suppressClick = true
                 val candidate = Rectangle(origin.x + current.x - start.x, origin.y + current.y - start.y,
                     panel.width, panel.height)
                 val devices = GraphicsEnvironment.getLocalGraphicsEnvironment().screenDevices
@@ -403,8 +420,22 @@ class IslandWindow(private val timeline: PlaybackSource, private val store: Sett
 
     private fun Rectangle.centerPoint() = Point(x + width / 2, y + height / 2)
 
+    /** Single click on the lyric bar: quick toggle for the independent OBS output. */
+    private fun toggleSpoutOutput() {
+        if (closed || !Platform.isWindows()) return
+        try {
+            val enabled = !store.read().spout.enabled
+            store.set("spout_enabled", enabled)
+            settings = store.read()
+            notifyUser(if (enabled) "Spout2 输出已开启" else "Spout2 输出已关闭", enabled)
+        } catch (error: Exception) {
+            report(error)
+        }
+    }
+
     override fun close() {
         if (closed) return
+        spoutClickTimer?.stop(); spoutClickTimer = null
         closed = true; frameScheduler.shutdownNow(); renderer.close(); spout?.close(); panel.close(); menu.close()
         pointerPresence?.close(); globalPointer?.close(); inputRegion?.close(); window.releaseFrame(); window.dispose()
     }
