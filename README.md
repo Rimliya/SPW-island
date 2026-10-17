@@ -6,7 +6,7 @@
 
 > [!NOTE]
 > 这是用于 **OBS Spout2 捕获** 的 fork，fork 自原作者仓库 [GaBoron/SPW-island](https://github.com/GaBoron/SPW-island)。
-> 本地扩展版 `1.0.0-gpu.2`（GPU 实验分支）：基于上游 1.0.0，保留 OBS Spout2 透明输出，桌面隐藏后仍可显示歌词；Spout2 帧改用 Skia 直接写入原生缓冲区。
+> 本地扩展版 `1.0.0-gpu.3`（GPU 实验分支）：基于上游 1.0.0，保留 OBS Spout2 透明输出，桌面隐藏后仍可显示歌词；Spout2 帧改用 Skia 直接写入原生缓冲区。
 > 本 fork 只构建和分发 Windows 包；安装和设置见 [OBS Spout2 使用说明](docs/obs-spout2.md)。
 
 <p align="center">为 Salt Player for Windows 制作的桌面歌词词岛。</p>
