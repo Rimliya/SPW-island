@@ -6,7 +6,7 @@
 
 > [!NOTE]
 > 这是用于 **OBS Spout2 捕获** 的 fork，fork 自原作者仓库 [GaBoron/SPW-island](https://github.com/GaBoron/SPW-island)。
-> 本地扩展版 `0.14.0-gpu.2`（GPU 实验分支）：基于上游 0.14.0，保留 OBS Spout2 透明输出，桌面隐藏后仍可显示歌词；Spout2 帧改用 Skia 直接写入原生缓冲区。
+> 本地扩展版 `1.0.0-gpu.1`（GPU 实验分支）：基于上游 1.0.0，保留 OBS Spout2 透明输出，桌面隐藏后仍可显示歌词；Spout2 帧改用 Skia 直接写入原生缓冲区。
 > 本 fork 只构建和分发 Windows 包；安装和设置见 [OBS Spout2 使用说明](docs/obs-spout2.md)。
 
 <p align="center">为 Salt Player for Windows 制作的桌面歌词词岛。</p>
@@ -35,13 +35,15 @@
 
 ## 安装
 
-1. 前往 [Releases](https://github.com/Rimliya/SPW-island/releases/latest) 下载 `windows-x64` 插件 ZIP；
+需要支持 Workshop API dev23 的 SPW 1.19.0 或更高版本，宿主运行环境为 Java 25 或更高版本。
+
+1. 前往 [Releases](https://github.com/Rimliya/SPW-island/releases/latest) 下载 `spw-island-<版本>.spmod`；
 2. 在 SPW 的创意工坊 / 插件管理中导入；
 3. 启用插件并播放一首已经有歌词的歌曲。
 
-不要导入带 `-source` 后缀的源码包。
+本 fork 只构建和分发 Windows x64 版本。不要导入带 `-source` 后缀的源码包。
 
-如果当前 SPW 没有导入入口，请看 [安装与更新](docs/installation.md)。
+权限说明见 [安装与更新](docs/installation.md)。
 
 本插件只显示 SPW 已经加载的歌词，不负责联网搜索。需要自动获取逐字歌词时，可以搭配 [SPW-Lyrics](https://github.com/GaBoron/SPW-Lyrics)。
 
@@ -52,6 +54,7 @@
 | Windows 10 / 11 x64 | 支持 |
 | Linux x64 | 本 fork 不再提供 |
 | macOS | 暂无计划 |
+
 
 ## 文档
 

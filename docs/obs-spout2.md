@@ -1,12 +1,12 @@
 # OBS 透明词岛（Windows x64）
 
-本地修改版 `0.14.0-gpu.2`（GPU 实验分支），基于上游 `v0.14.0`（`4a78d5f`）。
+本地修改版 `1.0.0-gpu.1`（GPU 实验分支），基于上游 `v1.0.0`（`8ad331d`）。
 保留原版桌面词岛，并新增独立的 Spout2 视频发送器。
 上一版 `0.10.0-spout.1` 基于 `ef6467ec195536619240efdfcb7870ce7270c909`。
 
 ## 使用
 
-1. 将 Windows 插件 ZIP 导入 SPW，启用插件。
+1. 将 Windows 插件包 `.spmod` 导入 SPW，启用插件。
 2. **OBS / Spout2 输出** 默认已开启；不需要时在同一设置页关闭即可。
 3. 给需要使用的 OBS 安装 [obs-spout2-plugin 1.12.0](https://github.com/Off-World-Live/obs-spout2-plugin/releases/tag/1.12.0)，然后重启 OBS。
 4. OBS 添加 **Spout2 Capture**，发送器选择 `SPW Lyrics Island`。
@@ -33,11 +33,11 @@
 
 ## 构建与验证
 
-要求 JDK 21、Visual Studio 2022 C++ Build Tools、Windows SDK、CMake。
-通过 `JAVA_HOME` 指定 JDK 21 即可，无需更改系统默认 Java。
+要求 JDK 25、Visual Studio 2022 C++ Build Tools、Windows SDK、CMake。
+通过 `JAVA_HOME` 指定 JDK 25 即可，无需更改系统默认 Java。
 
 ```powershell
-.\gradlew.bat pluginWindows spoutChecks --no-daemon
+.\gradlew.bat plugin --no-daemon
 cmake -S native/spout -B build/native-check -A x64 -DSPW_SPOUT_PROBE=ON
 cmake --build build/native-check --config Release
 python src/test/python/native_checks.py
@@ -51,6 +51,7 @@ python src/test/python/native_checks.py
 
 ## 合并说明
 
+- 上游 1.0.0 迁移到 Workshop API dev23，插件包格式改为 `.spmod`，宿主需要 SPW 1.19.0+ / Java 25；本 fork 仍只构建 Windows x64。
 - 上游 0.13 / 0.14 新增实验性液态玻璃背景、重复 GPU 适配器处理、强制逐字歌词与统一玻璃窗口。
   本 fork 原样接收这些功能；Spout2 使用独立的离屏 `IslandPanel` 记录动画与布局，再由 Skia 在发送线程直接光栅化到原生帧缓冲，与桌面窗口绘制互不影响。
 - 上游 0.11 起歌词布局改为“当前行同步测量 + 后台预热后续行”。`SpoutPresentation` 每帧调用 `prepareLyrics`，

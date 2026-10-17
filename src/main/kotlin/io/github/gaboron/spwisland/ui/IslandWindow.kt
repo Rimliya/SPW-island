@@ -231,6 +231,7 @@ class IslandWindow(private val timeline: PlaybackSource, private val store: Sett
         }
         buffersReleased = false
         panel.settings = settings; panel.snapshot = snap
+        renderer.install(); window.gpuRendering = renderer.active
 
         panel.updateSpectrum(levels, dt)
 
