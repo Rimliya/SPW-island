@@ -55,7 +55,12 @@ class IslandRuntime : AutoCloseable {
             linuxWindow = LinuxIslandProcess(timeline, settings, actions, ::report, spectrum)
         } else onEdt {
             window = IslandWindow(timeline, settings, actions, ::report,
-                spectrum::levels, spectrum::usesSyntheticFallback, { spectrum.status })
+                spectrum::levels, spectrum::usesSyntheticFallback, { spectrum.status }) { message, success ->
+                runCatching {
+                    WorkshopApi.ui.toast(message, if (success) WorkshopApi.Ui.ToastType.Success
+                        else WorkshopApi.Ui.ToastType.Warning)
+                }
+            }
         }
     }
     private fun updateSpectrumMode() {
