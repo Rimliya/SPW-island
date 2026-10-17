@@ -192,6 +192,7 @@ fun registerPluginArchive(taskName: String, platform: String, enabled: Boolean) 
 }
 
 val pluginWindows = registerPluginArchive("pluginWindows", "windows", isWindows)
+pluginWindows.configure { dependsOn("spoutChecks") }
 
 tasks.register("plugin") {
     group = "build"
