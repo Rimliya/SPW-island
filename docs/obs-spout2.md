@@ -1,6 +1,6 @@
 # OBS 透明词岛（Windows x64）
 
-本地修改版 `0.12.0-spout.1`，基于上游 `v0.12.0`（`34988f7`）。
+本地修改版 `0.14.0-spout.1`，基于上游 `v0.14.0`（`4a78d5f`）。
 保留原版桌面词岛，并新增独立的 Spout2 视频发送器。
 上一版 `0.10.0-spout.1` 基于 `ef6467ec195536619240efdfcb7870ce7270c909`。
 
@@ -49,8 +49,10 @@ python src/test/python/native_checks.py
 `spoutSoak` 使用合成播放状态，不能替代真实 SPW 回调验收；发送器为 `SPW Spout Verification`。
 运行时每 10 秒向标准输出记录 `[SPW Spout]`：实际绘制 FPS、发送计数、丢弃数、绘制最大值/P95 和上传最大值。
 
-## 0.12.0 合并说明
+## 合并说明
 
+- 上游 0.13 / 0.14 新增实验性液态玻璃背景、重复 GPU 适配器处理、强制逐字歌词与统一玻璃窗口。
+  本 fork 原样接收这些功能；Spout2 仍使用独立的 Java2D 离屏 `IslandPanel`，与桌面 GPU 绘制互不影响。
 - 上游 0.11 起歌词布局改为“当前行同步测量 + 后台预热后续行”。`SpoutRenderer` 每帧调用 `prepareLyrics`，
   并使用自己的 `IslandPanel` 预热线程；关闭或重配置输出时释放该线程。
 - 上游 0.12 的 `IslandWindow.tick()` 在桌面隐藏时提前返回。Spout2 帧在该返回之前生成，

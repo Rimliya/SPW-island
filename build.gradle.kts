@@ -20,6 +20,8 @@ require(targetPlatform == null || targetPlatform == "windows") {
 }
 val isWindows = targetPlatform?.let { it == "windows" } ?: currentOs.isWindows
 val metadataSources by configurations.creating { isTransitive = false }
+val linuxSkikoRuntime by configurations.creating { isTransitive = false }
+val skikoVersion = "0.150.1"
 dependencies {
     compileOnly(kotlin("stdlib"))
     compileOnly(workshop) { isTransitive = false }
@@ -29,6 +31,8 @@ dependencies {
     implementation("net.jthink:jaudiotagger:3.0.1")
     implementation("com.google.code.gson:gson:2.11.0")
     implementation(compose.desktop.currentOs)
+    implementation("org.jetbrains.skiko:skiko-awt:$skikoVersion")
+    linuxSkikoRuntime("org.jetbrains.skiko:skiko-awt-runtime-linux-x64:$skikoVersion")
     metadataSources("net.jthink:jaudiotagger:3.0.1:sources")
     testImplementation(kotlin("stdlib"))
 }
@@ -56,9 +60,11 @@ tasks.processResources {
         dependsOn("buildSpectrum")
         dependsOn("buildWindowsTray")
         dependsOn("buildSpout")
+        dependsOn("buildWindowsGlass")
         from(layout.buildDirectory.file("native/spw-spectrum.exe")) { into("native") }
         from(layout.buildDirectory.file("native/spw-island-tray.exe")) { into("native") }
         from(layout.buildDirectory.file("native/spw-spout.dll")) { into("native") }
+        from(layout.buildDirectory.file("native/spw-island-glass.dll")) { into("native") }
         from({ zipTree(configurations.runtimeClasspath.get().single {
             it.name.startsWith("skiko-awt-runtime-windows-x64-")
         }) }) {
@@ -90,6 +96,7 @@ tasks.register<Zip>("sourceArchive") {
         exclude("**/bin/**", "**/obj/**", "spout/build/**")
     }
     from("gradle") { into("gradle") }
+    from("tools/build-glass.ps1") { into("tools") }
     from("licenses") { into("licenses") }
     from("docs") { into("docs") }
     from("build.gradle.kts", "settings.gradle.kts", "gradle.properties", "gradlew", "gradlew.bat",
@@ -139,6 +146,19 @@ tasks.register<Exec>("buildSpout") {
         copy { from("build/spout/Release/spw-spout.dll"); into("build/native") }
     }
 }
+tasks.register<Exec>("buildWindowsGlass") {
+    val output = layout.buildDirectory.file("native/spw-island-glass.dll")
+    inputs.file("native/glass/DesktopCapture.cpp")
+    inputs.file("native/glass/DesktopReadback.h")
+    inputs.file("native/glass/DesktopViewport.h")
+    inputs.file("native/glass/DesktopSharedTexture.h")
+    inputs.file("tools/build-glass.ps1")
+    outputs.file(output)
+    onlyIf { isWindows }
+    executable = "powershell.exe"
+    args("-NoProfile", "-File", file("tools/build-glass.ps1").absolutePath,
+        "-Output", output.get().asFile.absolutePath)
+}
 
 fun registerPluginArchive(taskName: String, platform: String, enabled: Boolean) = tasks.register<Zip>(taskName) {
     val libraryNames by lazy {
@@ -164,6 +184,7 @@ fun registerPluginArchive(taskName: String, platform: String, enabled: Boolean) 
                 name = libraryNames[file.canonicalPath] ?: name
             }
         }
+        if (platform == "linux") from(linuxSkikoRuntime)
     }
     into("licenses") { from("licenses") }
     into("source") { from(tasks.named("sourceArchive")); from(metadataSources) }

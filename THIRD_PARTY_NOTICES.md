@@ -12,7 +12,7 @@ Windows 发送器静态链接 leadedge/Spout2 `2.007.017` 的 DirectX 11 必需�
 “灵动词岛 / Dynamic Lyrics Island”原创为 **Lyricify / WXRIW（XY Wang）**，首次创作于 2022-09-30。
 [原始声明](https://github.com/WXRIW/Lyricify-App#lyricify-原创)将这项创作以 [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/) 许可。
 
-本项目是面向 SPW 的独立改编：重新实现播放接入、Java2D 文字绘制、逐字高亮、窗口伸缩、播放控制、设置和 Windows 悬浮窗口行为。视觉和交互改编继续采用 CC BY-SA 4.0；保留署名、原始来源、许可链接和改动说明，不暗示原作者认可或参与本项目。没有复制或分发 Lyricify 应用程序、标志、截图或未公开源码。
+本项目是面向 SPW 的独立改编：重新实现播放接入、文字塑形与绘制、逐字高亮、窗口伸缩、播放控制、设置和 Windows 悬浮窗口行为。视觉和交互改编继续采用 CC BY-SA 4.0；保留署名、原始来源、许可链接和改动说明，不暗示原作者认可或参与本项目。没有复制或分发 Lyricify 应用程序、标志、截图或未公开源码。
 
 新增程序代码采用 [GPL-3.0-only](LICENSE)。Creative Commons 将 GPLv3 列为 [CC BY-SA 4.0 的单向兼容许可](https://creativecommons.org/compatible-licenses/)，因此代码贡献采用 GPLv3 不会替换原始创作的 CC BY-SA 许可。视觉设计及本文等文档按 CC BY-SA 4.0 提供。完整文本见 [CC-BY-SA-4.0.txt](licenses/CC-BY-SA-4.0.txt)。
 
@@ -26,6 +26,8 @@ Windows 发送器静态链接 leadedge/Spout2 `2.007.017` 的 DirectX 11 必需�
 
 ## 依赖与构建工具
 
+[AndroidLiquidGlass / Backdrop](https://github.com/Kyant0/AndroidLiquidGlass)，Copyright 2025 Kyant，采用 [Apache-2.0](licenses/Apache-2.0.txt)。参考提交 `65ab177e90e5c1d8c62e70cf7755841982da65f6`；2026-10-15 将 `internal/Shaders.kt` 的 Lens、七采样色散与 Default Highlight 移植到 `IslandGlassShaders.kt`，并在 Skia 中复现 `ColorFilter.kt`、`HighlightModifier.kt` 的 Vibrancy、滤镜顺序及独立 PLUS 高光合成。使用真实 Windows 桌面裁片；轮廓距离与法线适配原有动态 Path，限制色散并减弱背光侧，未引入 Compose 组件。原始声明与改动见 [NOTICE](NOTICE)。
+
 | 项目 | 使用范围 | 许可与保留材料 |
 | --- | --- | --- |
 | [SPW Workshop API](https://github.com/Moriafly/spw-workshop-api)，Moriafly | 编译使用 0.1.0-dev20；由 SPW 提供，不装入插件 | Apache-2.0；[完整文本](licenses/Apache-2.0.txt)，署名见 [NOTICE](NOTICE) |
@@ -33,8 +35,11 @@ Windows 发送器静态链接 leadedge/Spout2 `2.007.017` 的 DirectX 11 必需�
 | [JNA / JNA Platform](https://github.com/java-native-access/jna/tree/5.17.0)，JNA contributors | 随包提供 5.17.0；鼠标穿透、全屏判断与原生输入区域 | JNA 双许可中选择 Apache-2.0；保留 [JNA LICENSE](licenses/JNA-LICENSE.txt)、[第三方声明](licenses/JNA-THIRD-PARTY.txt)、[libffi 许可](licenses/JNA-libffi-LICENSE.txt) 与 JAR 内原始许可 |
 | [Gson](https://github.com/google/gson/tree/gson-parent-2.11.0)，Google | 随包提供 2.11.0；配置 JSON 的读取与序列化 | Apache-2.0；保留 JAR 内声明及 [完整文本](licenses/Apache-2.0.txt) |
 | [Jaudiotagger](https://www.jthink.net/jaudiotagger/)，Paul Taylor 与 contributors | 随包提供未修改的 3.0.1，仅读取本地音频时长与内嵌封面；独立 JAR 可替换 | LGPL-2.1-or-later；附带 [许可全文](licenses/LGPL-2.1.txt) 与 `source/jaudiotagger-3.0.1-sources.jar` |
-| [MiSans](https://hyperos.mi.com/font)，Xiaomi | 默认歌词、插件界面、右键菜单与字体窗口预览使用内置 MiSans VF | MiSans 字体许可；附带 [许可文件](licenses/MiSans-License.pdf) |
-| [Kotlin](https://github.com/JetBrains/kotlin)，JetBrains | 编译工具和宿主标准库，不装入插件 | Apache-2.0 |
+| [MiSans](https://hyperos.mi.com/font)，Xiaomi | Windows 默认歌词、插件界面、右键菜单与字体窗口预览使用内置 MiSans VF | MiSans 字体许可；附带 [许可文件](licenses/MiSans-License.pdf) |
+| [Compose Multiplatform](https://github.com/JetBrains/compose-multiplatform)，JetBrains / Android Open Source Project | Windows 字体窗口使用 Compose Desktop 1.12.0；随 Windows 包提供运行库 | Apache-2.0；保留 JAR 内声明与 [完整文本](licenses/Apache-2.0.txt) |
+| [Skiko](https://github.com/JetBrains/skiko/tree/v0.150.1)，JetBrains | Windows 词岛与字体窗口使用 0.150.1；随包提供 Windows 原生库 | Apache-2.0；[完整文本](licenses/Apache-2.0.txt) 与 [Skiko NOTICE](licenses/Skiko-NOTICE.txt) |
+| [Skia](https://skia.org/)，Google 与 contributors | Skiko 原生库中的绘制引擎 | BSD-3-Clause；附带 [许可全文](licenses/Skia-LICENSE.txt) |
+| [Kotlin / kotlinx.coroutines](https://github.com/JetBrains/kotlin)，JetBrains | 编译工具、标准库与绘制调度运行库；随包提供 | Apache-2.0；[完整文本](licenses/Apache-2.0.txt) |
 | [PF4J](https://github.com/pf4j/pf4j)，Decebal Suiu | 编译使用 3.12.0，由宿主提供 | Apache-2.0 |
 | [Gradle](https://github.com/gradle/gradle)，Gradle contributors | Wrapper 来自 SPW API 0.1.0-dev20，构建使用 9.2.1 | Apache-2.0；Wrapper 自带声明保留，发行包不内嵌 Gradle 发行版 |
 
