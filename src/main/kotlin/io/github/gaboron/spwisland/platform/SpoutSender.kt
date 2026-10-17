@@ -12,6 +12,12 @@ import java.nio.file.StandardCopyOption
 import java.security.MessageDigest
 import javax.swing.SwingUtilities
 
+/** A queued frame: reusable BGRA pixels, or a renderer that paints straight into the native buffer. */
+internal sealed class SpoutFramePayload {
+    class Pixels(val data: IntArray) : SpoutFramePayload()
+    class Native(val paint: (Pointer, Int, Int) -> Unit) : SpoutFramePayload()
+}
+
 /** One native owner thread; one pending frame and at most three reusable pixel arrays. */
 internal class SpoutSender(private val report: (Throwable) -> Unit) : AutoCloseable {
     private val lock = Object()
@@ -20,17 +26,22 @@ internal class SpoutSender(private val report: (Throwable) -> Unit) : AutoClosea
     private var failedGeneration = -1L
     private var closed = false
     private var worker: Thread? = null
-    private data class Frame(val pixels: IntArray, val generation: Long)
+    private data class Frame(val payload: SpoutFramePayload, val generation: Long)
     private val available = ArrayDeque<IntArray>()
     private var pending: Frame? = null
     @Volatile var sentFrames = 0L; private set
     @Volatile var droppedFrames = 0L; private set
+    @Volatile var lastPaintNs = 0L; private set
+    @Volatile var maxPaintNs = 0L; private set
     @Volatile var lastUploadNs = 0L; private set
     @Volatile var maxUploadNs = 0L; private set
+    /** A failed native paint keeps the sender alive and asks the caller to fall back to pixel frames. */
+    @Volatile var nativeFramesFailed = false; private set
 
     fun configure(settings: SpoutSettings?) = synchronized(lock) {
         if (closed || desired == settings) return@synchronized
         desired = settings; generation++; pending = null; available.clear()
+        nativeFramesFailed = false
         if (settings != null) {
             repeat(3) { available.add(IntArray(settings.width * settings.height)) }
             if (worker == null) worker = Thread(::run, "SPW Spout sender").apply { isDaemon = true; start() }
@@ -44,15 +55,31 @@ internal class SpoutSender(private val report: (Throwable) -> Unit) : AutoClosea
         val frame = synchronized(lock) {
             if (!ready || desired!!.width * desired!!.height != pixels.size) return
             // Reclaim a queued (never in-flight) frame before copying. The sender never waits for the EDT.
-            pending?.let { available.add(it.pixels); pending = null; droppedFrames++ }
+            pending?.let { recycle(it); droppedFrames++ }
             if (available.isEmpty()) { droppedFrames++; return }
-            Frame(available.removeFirst(), generation)
+            Frame(SpoutFramePayload.Pixels(available.removeFirst()), generation)
         }
-        pixels.copyInto(frame.pixels)
+        pixels.copyInto((frame.payload as SpoutFramePayload.Pixels).data)
         synchronized(lock) {
             if (closed || generation != frame.generation) return
             pending = frame; lock.notifyAll()
         }
+    }
+
+    /** Latest-frame-wins hand-off of a frame that paints itself into the native buffer on the sender thread. */
+    fun offerNative(paint: (Pointer, Int, Int) -> Unit) {
+        synchronized(lock) {
+            if (!ready) return
+            pending?.let { recycle(it); droppedFrames++ }
+            pending = Frame(SpoutFramePayload.Native(paint), generation)
+            lock.notifyAll()
+        }
+    }
+
+    /** Returns a queued (never in-flight) frame to the pixel pool when it owned one. */
+    private fun recycle(frame: Frame) {
+        pending = null
+        (frame.payload as? SpoutFramePayload.Pixels)?.let { available.add(it.data) }
     }
 
     private fun run() {
@@ -82,14 +109,30 @@ internal class SpoutSender(private val report: (Throwable) -> Unit) : AutoClosea
                         }
                     }
                     if (frame != null && settings != null && handle != null && frame.generation == version) {
-                        val start = System.nanoTime()
-                        memory!!.write(0, frame.pixels, 0, frame.pixels.size)
-                        check(api!!.spw_spout_send(handle, memory, settings.width, settings.height) == 1) {
-                            "Spout2 发送失败：${api.spw_spout_error()}。请重新开关输出。"
+                        val paintStart = System.nanoTime()
+                        val painted = when (val payload = frame.payload) {
+                            is SpoutFramePayload.Pixels -> {
+                                memory!!.write(0, payload.data, 0, payload.data.size); true
+                            }
+                            is SpoutFramePayload.Native -> try {
+                                payload.paint(memory!!, settings.width, settings.height); true
+                            } catch (error: Throwable) {
+                                nativeFramesFailed = true
+                                SwingUtilities.invokeLater { if (!synchronized(lock) { closed }) report(error) }
+                                false
+                            }
                         }
-                        lastUploadNs = System.nanoTime() - start
-                        maxUploadNs = maxOf(maxUploadNs, lastUploadNs)
-                        sentFrames++
+                        lastPaintNs = System.nanoTime() - paintStart
+                        maxPaintNs = maxOf(maxPaintNs, lastPaintNs)
+                        if (painted) {
+                            val uploadStart = System.nanoTime()
+                            check(api!!.spw_spout_send(handle, memory!!, settings.width, settings.height) == 1) {
+                                "Spout2 发送失败：${api.spw_spout_error()}。请重新开关输出。"
+                            }
+                            lastUploadNs = System.nanoTime() - uploadStart
+                            maxUploadNs = maxOf(maxUploadNs, lastUploadNs)
+                            sentFrames++
+                        }
                     }
                 } catch (error: Throwable) {
                     handle?.let { api?.spw_spout_destroy(it) }; handle = null
@@ -98,7 +141,8 @@ internal class SpoutSender(private val report: (Throwable) -> Unit) : AutoClosea
                     SwingUtilities.invokeLater { if (!synchronized(lock) { closed }) report(error) }
                 } finally {
                     if (frame != null) synchronized(lock) {
-                        if (generation == frame.generation && !closed) available.add(frame.pixels)
+                        if (generation == frame.generation && !closed)
+                            (frame.payload as? SpoutFramePayload.Pixels)?.let { available.add(it.data) }
                     }
                 }
             }

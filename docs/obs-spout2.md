@@ -1,6 +1,6 @@
 # OBS 透明词岛（Windows x64）
 
-本地修改版 `0.14.0-spout.1`，基于上游 `v0.14.0`（`4a78d5f`）。
+本地修改版 `0.14.0-gpu.1`（GPU 实验分支），基于上游 `v0.14.0`（`4a78d5f`）。
 保留原版桌面词岛，并新增独立的 Spout2 视频发送器。
 上一版 `0.10.0-spout.1` 基于 `ef6467ec195536619240efdfcb7870ce7270c909`。
 
@@ -52,8 +52,8 @@ python src/test/python/native_checks.py
 ## 合并说明
 
 - 上游 0.13 / 0.14 新增实验性液态玻璃背景、重复 GPU 适配器处理、强制逐字歌词与统一玻璃窗口。
-  本 fork 原样接收这些功能；Spout2 仍使用独立的 Java2D 离屏 `IslandPanel`，与桌面 GPU 绘制互不影响。
-- 上游 0.11 起歌词布局改为“当前行同步测量 + 后台预热后续行”。`SpoutRenderer` 每帧调用 `prepareLyrics`，
+  本 fork 原样接收这些功能；Spout2 使用独立的离屏 `IslandPanel` 记录动画与布局，再由 Skia 在发送线程直接光栅化到原生帧缓冲，与桌面窗口绘制互不影响。
+- 上游 0.11 起歌词布局改为“当前行同步测量 + 后台预热后续行”。`SpoutPresentation` 每帧调用 `prepareLyrics`，
   并使用自己的 `IslandPanel` 预热线程；关闭或重配置输出时释放该线程。
 - 上游 0.12 的 `IslandWindow.tick()` 在桌面隐藏时提前返回。Spout2 帧在该返回之前生成，
   帧间隔取桌面调度与 Spout2 目标帧率的较小值，因此全屏 / 暂停 / 关闭显示时仍按设定帧率输出。
@@ -61,7 +61,10 @@ python src/test/python/native_checks.py
 
 ## 实现边界
 
-Java2D 在 Swing 事件线程绘制独立 `IslandPanel`，产生预乘 BGRA8 像素。
-后台线程通过 JNA 调用 `spw-spout.dll` 上传 D3D11 共享纹理；不是全程 GPU 零拷贝。
-最多三个可复用像素数组和一帧待发送数据，忙时替换旧待发送帧。
-关闭、重配置、退出时均在原生所属线程释放设备与发送器。
+Swing 事件线程只推进动画、歌词布局与 `IslandPanel.gpuFrame()` 快照，不再逐帧做 Java2D 光栅化。
+发送线程用 Skia `Surface.makeRasterDirect` 直接绘制到 JNA 帧缓冲（预乘 BGRA8，stride = 宽度 × 4），
+再由 `spw-spout.dll` 上传 D3D11 共享纹理，省去一整帧的 CPU 拷贝；这不是 GPU 显存到显存的零拷贝
+（Skiko 使用 D3D12，桥接层只接受 CPU 字节），因此上限仍是“一次光栅化 + 一次纹理上传”。
+待发送帧采用最新帧覆盖策略；原生绘制失败或设置 `-Dspw.spout.renderer=software` 时自动回退到
+`SpoutPresentation` 的 Java2D 兼容光栅路径，输出功能不中断。
+关闭、重配置、退出时均在原生所属线程释放设备与发送器，并释放 Skia 场景与 Surface。

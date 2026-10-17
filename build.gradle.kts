@@ -42,6 +42,7 @@ tasks.register<JavaExec>("spoutChecks") {
     dependsOn(tasks.testClasses)
     classpath = sourceSets.test.get().runtimeClasspath
     mainClass.set("io.github.gaboron.spwisland.ui.SpoutChecksKt")
+    jvmArgs("-Djava.awt.headless=true")
 }
 tasks.register<JavaExec>("spoutSoak") {
     dependsOn(tasks.testClasses)
