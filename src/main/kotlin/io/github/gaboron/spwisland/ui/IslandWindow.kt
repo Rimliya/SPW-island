@@ -181,7 +181,7 @@ class IslandWindow(private val timeline: PlaybackSource, private val store: Sett
 
     private fun tick() {
         tickDesktop()
-        if (!closed) spout?.nextDelayMs()?.let { frameDelayMs = minOf(frameDelayMs, it) }
+        if (!closed) spout?.nextDelayMs()?.let { frameInterval = minOf(frameInterval, it * 1_000_000L) }
     }
 
     private fun tickDesktop() {
