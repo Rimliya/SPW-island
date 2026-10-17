@@ -141,12 +141,16 @@ internal class SkiaSpoutPainter : AutoCloseable {
         return created
     }
 
-    override fun close() = synchronized(lock) {
-        closed = true
+    /** Drops Skia state for a reconfiguration; unlike close(), the painter stays usable afterwards. */
+    fun reset() = synchronized(lock) { release() }
+
+    private fun release() {
         surface?.close(); surface = null
         scene?.close(); scene = null
         address = 0L; width = 0; height = 0
     }
+
+    override fun close() = synchronized(lock) { closed = true; release() }
 }
 
 internal class SpoutOutput(private val report: (Throwable) -> Unit) : AutoCloseable {
@@ -170,7 +174,7 @@ internal class SpoutOutput(private val report: (Throwable) -> Unit) : AutoClosea
             sender.configure(wanted)
             // The native painter is retried for every configuration; a failure falls back to the raster path.
             compatibility = System.getProperty("spw.spout.renderer") == "software"
-            painter.close()
+            painter.reset()
         }
         if (wanted == null || failed || !sender.ready || now < nextFrame) return
         if (!compatibility && sender.nativeFramesFailed) compatibility = true
@@ -198,7 +202,7 @@ internal class SpoutOutput(private val report: (Throwable) -> Unit) : AutoClosea
                 sampleFrames = 0; sampleStart = now; maxRenderNs = 0
             }
         } catch (error: Throwable) {
-            failed = true; sender.configure(null); painter.close(); report(error)
+            failed = true; sender.configure(null); painter.reset(); report(error)
         }
     }
 

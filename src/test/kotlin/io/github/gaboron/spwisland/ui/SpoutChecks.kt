@@ -26,12 +26,15 @@ fun main() {
             val pixels = IntArray(output.width * output.height)
             val presentation = SpoutPresentation()
             val painter = SkiaSpoutPainter()
+            // SpoutOutput resets the painter on every configuration change; it must remain usable.
+            painter.reset()
             val memory = Memory(output.width.toLong() * output.height * 4)
             try {
                 var advance = presentation.advance(options, snapshot, levels, .1, false)
                 repeat(30) { advance = presentation.advance(options, snapshot, levels, .1, false) }
                 painter.paint(memory, output.width, output.height, advance)
                 memory.read(0, pixels, 0, pixels.size)
+                check(pixels.any { (it ushr 24) != 0 }) { "Native painter produced an empty frame" }
             } finally {
                 memory.close(); painter.close(); presentation.close()
             }
