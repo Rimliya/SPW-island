@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-only
 package io.github.gaboron.spwisland.ui
 
+import io.github.gaboron.spwisland.core.DEFAULT_LYRIC_FONT_FAMILY
 import io.github.gaboron.spwisland.core.LyricFontWeight
 import com.sun.jna.Platform
 import com.sun.jna.platform.win32.Advapi32Util
@@ -14,7 +15,7 @@ import java.util.concurrent.ConcurrentHashMap
 import java.awt.font.TextAttribute
 import kotlin.math.abs
 
-/** Creates the shared MiSans UI/lyric font, with optional lyric-only custom fonts. */
+/** Creates the shared MiSans UI font, the bundled default lyric font, and custom lyric fonts. */
 internal object SystemUiFont {
     private data class InstalledFace(val font: Font, val weight: Int)
 
@@ -25,6 +26,7 @@ internal object SystemUiFont {
     fun derive(style: Int, size: Float): Font = bundledMiSans.deriveFont(style, size)
 
     fun lyric(family: String, weight: LyricFontWeight, size: Float): Font {
+        if (family == DEFAULT_LYRIC_FONT_FAMILY) return bundledPingFang(weight, size)
         val requested = normalizeName(family)
         if (requested.isEmpty()) return lyricFallback(weight, size)
         val direct = facesFor(requested)
@@ -165,7 +167,23 @@ internal object SystemUiFont {
         stream.use { Font.createFont(Font.TRUETYPE_FONT, it) }
     }
 
-    fun lyricFallback(weight: LyricFontWeight, size: Float): Font {
+    private val bundledPingFangFace by lazy {
+        val resource = "/fonts/PingFang.ttc"
+        val stream = checkNotNull(SystemUiFont::class.java.getResourceAsStream(resource)) {
+            "内置字体资源缺失：$resource"
+        }
+        stream.use { Font.createFont(Font.TRUETYPE_FONT, it) }
+    }
+
+    private fun bundledPingFang(weight: LyricFontWeight, size: Float): Font =
+        bundledPingFangFace.deriveFont(mapOf(TextAttribute.WEIGHT to lyricAwtWeight(weight),
+            TextAttribute.SIZE to size))
+
+    fun lyricFallback(weight: LyricFontWeight, size: Float): Font =
+        bundledMiSans.deriveFont(mapOf(TextAttribute.WEIGHT to lyricAwtWeight(weight),
+            TextAttribute.SIZE to size))
+
+    private fun lyricAwtWeight(weight: LyricFontWeight): Float {
         val anchors = listOf(
             100 to TextAttribute.WEIGHT_EXTRA_LIGHT,
             300 to TextAttribute.WEIGHT_LIGHT,
@@ -180,9 +198,7 @@ internal object SystemUiFont {
         val low = anchors[(upper - 1).coerceAtLeast(0)]
         val fraction = if (high.first == low.first) 0f else
             (weight.value - low.first).toFloat() / (high.first - low.first)
-        val awtWeight = low.second + (high.second - low.second) * fraction
-        return bundledMiSans.deriveFont(mapOf(TextAttribute.WEIGHT to awtWeight,
-            TextAttribute.SIZE to size))
+        return low.second + (high.second - low.second) * fraction
     }
 
     fun glyphFallback(reference: Font): Font {

@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: GPL-3.0-only
 package io.github.gaboron.spwisland.core
 
+const val DEFAULT_LYRIC_FONT_FAMILY = "@island-default"
+
 enum class SideContent(val showsSpectrum: Boolean, val showsSides: Boolean) {
     COVER_SPECTRUM(true, true),
     SPECTRUM(true, true),
@@ -39,7 +41,7 @@ data class IslandSettings(
     val spectrumCoverColor: Boolean = true,
     val fixedWidth: Boolean = false,
     val sideContent: SideContent = SideContent.COVER_SPECTRUM,
-    val fontFamily: String = "",
+    val fontFamily: String = DEFAULT_LYRIC_FONT_FAMILY,
     val fontWeight: LyricFontWeight = LyricFontWeight.REGULAR,
     val fontSize: Int = 22,
     val maxWidth: Int = 640,

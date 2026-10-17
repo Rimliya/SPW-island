@@ -73,7 +73,7 @@ class HostSettings(private val manager: ConfigManager, private val changed: () -
             "none" -> SideContent.NONE
             else -> SideContent.COVER_SPECTRUM
         },
-        fontFamily = config.get("font_family", "").take(100).trim(),
+        fontFamily = config.get("font_family", DEFAULT_LYRIC_FONT_FAMILY).take(100).trim(),
         fontWeight = LyricFontWeight.fromStorage(
             config.get<Any>("font_weight", "400").toString().toDoubleOrNull()?.toInt()?.toString() ?: "400"
         ),

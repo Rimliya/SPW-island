@@ -35,7 +35,8 @@ Windows 发送器静态链接 leadedge/Spout2 `2.007.017` 的 DirectX 11 必需�
 | [JNA / JNA Platform](https://github.com/java-native-access/jna/tree/5.17.0)，JNA contributors | 随包提供 5.17.0；鼠标穿透、全屏判断与原生输入区域 | JNA 双许可中选择 Apache-2.0；保留 [JNA LICENSE](licenses/JNA-LICENSE.txt)、[第三方声明](licenses/JNA-THIRD-PARTY.txt)、[libffi 许可](licenses/JNA-libffi-LICENSE.txt) 与 JAR 内原始许可 |
 | [Gson](https://github.com/google/gson/tree/gson-parent-2.11.0)，Google | 随包提供 2.11.0；配置 JSON 的读取与序列化 | Apache-2.0；保留 JAR 内声明及 [完整文本](licenses/Apache-2.0.txt) |
 | [Jaudiotagger](https://www.jthink.net/jaudiotagger/)，Paul Taylor 与 contributors | 随包提供未修改的 3.0.1，仅读取本地音频时长与内嵌封面；独立 JAR 可替换 | LGPL-2.1-or-later；附带 [许可全文](licenses/LGPL-2.1.txt) 与 `source/jaudiotagger-3.0.1-sources.jar` |
-| [MiSans](https://hyperos.mi.com/font)，Xiaomi | Windows 默认歌词、插件界面、右键菜单与字体窗口预览使用内置 MiSans VF | MiSans 字体许可；附带 [许可文件](licenses/MiSans-License.pdf) |
+| [MiSans](https://hyperos.mi.com/font)，Xiaomi | 插件界面、右键菜单、字体窗口预览和可选内置歌词字体使用内置 MiSans VF | MiSans 字体许可；附带 [许可文件](licenses/MiSans-License.pdf) |
+| 内置苹方风格字体，fork 维护者提供 | Windows 默认歌词字体；字体文件由用户提供并随包分发 | 来源与使用说明见 [PingFang-NOTICE.txt](licenses/PingFang-NOTICE.txt) |
 | [Compose Multiplatform](https://github.com/JetBrains/compose-multiplatform)，JetBrains / Android Open Source Project | Windows 字体窗口使用 Compose Desktop 1.12.1；随 Windows 包提供运行库 | Apache-2.0；保留 JAR 内声明与 [完整文本](licenses/Apache-2.0.txt) |
 | [Skiko](https://github.com/JetBrains/skiko/tree/v0.150.1)，JetBrains | Windows 词岛与字体窗口使用 0.150.1；随包只提供 Windows x64 原生库 | Apache-2.0；[完整文本](licenses/Apache-2.0.txt) 与 [Skiko NOTICE](licenses/Skiko-NOTICE.txt) |
 | [Skia](https://skia.org/)，Google 与 contributors | Skiko 原生库中的绘制引擎 | BSD-3-Clause；附带 [许可全文](licenses/Skia-LICENSE.txt) |

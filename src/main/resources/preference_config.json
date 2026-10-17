@@ -102,8 +102,8 @@
           "type": "edittext",
           "key": "font_family",
           "title": "歌词字体（Linux）",
-          "default_value": "",
-          "summary": "Linux 使用此项设置字体；留空使用内置 MiSans。Windows 请使用上方字体窗口。"
+          "default_value": "@island-default",
+          "summary": "Linux 使用此项设置字体；@island-default 使用内置苹方，留空使用内置 MiSans。Windows 请使用上方字体窗口。"
         },
         {
           "type": "list",
