@@ -58,6 +58,7 @@ tasks.register<JavaExec>("spoutLifecycle") {
 tasks.processResources {
     doFirst { check(isWindows) { "Build the Windows-only plugin on Windows with the native toolchains installed" } }
     from("native/shared-fonts/MiSansVF.ttf") { into("fonts") }
+    from("native/shared-fonts/PingFang.ttc") { into("fonts") }
     dependsOn("buildSpectrum", "buildWindowsTray", "buildWindowsGlass", "buildSpout")
     from(layout.buildDirectory.file("native/spw-spectrum.exe")) { into("native") }
     from(layout.buildDirectory.file("native/spw-island-tray.exe")) { into("native") }

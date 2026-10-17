@@ -557,7 +557,7 @@ LyricPainter
 | `WordGeometry.kt` | 在有界后台线程中准备单词和 grapheme 的字形几何，避免动画线程做昂贵轮廓运算 |
 | `TimedKaraokeBoundary.kt` | 低性能模式下只计算当前逐字单元的高亮边界 |
 | `LyricGlow.kt` | 长音强调的辉光绘制 |
-| `SystemUiFont.kt` | 加载两平台共用的内置 MiSans、自定义歌词字体及缺字回退 |
+| `SystemUiFont.kt` | 加载插件界面用内置 MiSans、默认歌词用内置苹方、自定义歌词字体及缺字回退 |
 | `ComposeFontPickerWindow.kt` | 打开 Compose 字体窗口并回写选择结果 |
 | `FontPickerCatalog.kt` | 读取 Windows 已安装字体和可用字形，并提供搜索分类 |
 | `FontPickerContent.kt` | 字体窗口的搜索、字形选择与操作界面 |
@@ -717,7 +717,8 @@ GNOME Wayland 使用 `SPW Island Pointer` 扩展，支持 GNOME 45–50。扩展
 | `src/linux/resources/preference_config.json` | 上游 Linux 配置页声明（本 fork 已删除） |
 | `src/main/resources/META-INF/extensions.idx` | 显式注册 `IslandPlaybackExtension` |
 | `src/main/resources/project.properties` | 构建时写入项目源代码地址 |
-| `native/shared-fonts/MiSansVF.ttf` | 两平台共用的 MiSans，可在构建时加入歌词、菜单和字体窗口资源 |
+| `native/shared-fonts/MiSansVF.ttf` | 插件界面、菜单和字体窗口使用的 MiSans，也可作为可选歌词字体 |
+| `native/shared-fonts/PingFang.ttc` | 默认歌词使用的内置苹方风格字体；由 fork 维护者提供，说明见 `licenses/PingFang-NOTICE.txt` |
 | `gradle.properties` | 项目版本与项目地址的统一来源 |
 | `build.gradle.kts` | 依赖、平台资源、频谱 helper、插件包和源码包构建 |
 | `settings.gradle.kts` | Gradle 项目名称和依赖仓库 |
@@ -1556,7 +1557,8 @@ Bug 报告、功能建议、兼容性反馈、设计想法和代码贡献都欢�
 - JNA；
 - Jaudiotagger；
 - Gson；
-- MiSans。
+- MiSans；
+- 内置苹方风格字体（来源与使用说明见 `licenses/PingFang-NOTICE.txt`）。
 
 第三方来源和许可要求以：
 

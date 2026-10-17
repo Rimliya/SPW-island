@@ -1,0 +1,23 @@
+内置苹方风格歌词字体说明
+
+该字体文件由本 fork 的维护者提供，用于作为灵动词岛的默认歌词字体。
+字体文件来自 Windows 系统的“SF Pro + 苹方”替换字体包，原始说明如下：
+
+表情字体来源：
+https://github.com/jjjuk/emoji-win
+
+字体说明：
+基于 horla 的修改版再次修改，
+horla 的版本则是基于 ACT2_セメ 提取的 iOS 26 苹方 VF 字体修改而来。
+主要改动：
+- 混搭苹方 SF Pro 西文，补全部分缺失字符
+- 合并苹方 SC、HK、TC 部分 CJK，采用 MiSans VF 做底包，补全日文、韩文
+- 添加时间冒号居中特性
+- 字体区间：小米机型 150-700，其他机型通用 100-900
+
+免责声明：
+https://acndasbcueyo.feishu.cn/wiki/UcoFwGD2Ci8DY6k7ohwcPBwhn3b
+本文件仅供个人学习交流，严禁商用。与苹果及小米官方无关。替换系统字体存在风险，因个人操作失误导致系统损坏等一切后果，作者不承担任何法律责任。
+
+本 fork 仅将该文件用于非商业性的插件歌词显示。若权利方要求移除，请删除
+native/shared-fonts/PingFang.ttc 及对应构建产物。

@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-only
 package io.github.gaboron.spwisland.ui
 
+import io.github.gaboron.spwisland.core.DEFAULT_LYRIC_FONT_FAMILY
 import io.github.gaboron.spwisland.core.LyricFontWeight
 import com.sun.jna.Platform
 import com.sun.jna.platform.win32.Advapi32Util
@@ -34,7 +35,7 @@ internal data class PickerFace(val name: String, val weight: LyricFontWeight, va
 internal data class PickerFamily(val name: String, val localizedName: String, val faces: List<PickerFace>,
                                  val source: String = "", val variable: Boolean = false) {
     val category: PickerFontCategory get() {
-        if (name.isEmpty()) return PickerFontCategory.SIMPLIFIED_CHINESE
+        if (name.isEmpty() || name == DEFAULT_LYRIC_FONT_FAMILY) return PickerFontCategory.SIMPLIFIED_CHINESE
         val text = "$name $localizedName".lowercase(Locale.ROOT)
         if (simplifiedMarkers.containsMatchIn(text)) return PickerFontCategory.SIMPLIFIED_CHINESE
         if (otherMarkers.containsMatchIn(text) || localizedName.any { it.code > 127 })
@@ -61,7 +62,10 @@ internal object FontPickerCatalog {
         val locale = Locale.getDefault()
         val installed = GraphicsEnvironment.getLocalGraphicsEnvironment().allFonts
         val families = installed.groupBy { it.getFamily(Locale.ROOT) }
-        return listOf(PickerFamily("", "内置 MiSans", bundledFaces, "插件内置字体", true)) +
+        return listOf(
+            PickerFamily(DEFAULT_LYRIC_FONT_FAMILY, "苹方（默认）", bundledPingFangFaces, "插件内置字体 · 默认"),
+            PickerFamily("", "内置 MiSans", bundledFaces, "插件内置字体", true)
+        ) +
             families.map { (name, fonts) ->
             PickerFamily(name, fonts.first().getFamily(locale), fonts.map { font ->
                 PickerFace(font.getFontName(locale), weightOf(font), font.isItalic)
@@ -93,8 +97,11 @@ internal object FontPickerCatalog {
                 sources.putIfAbsent(family, fileName)
             }
         }
-        val bundled = PickerFamily("", "内置 MiSans", bundledFaces, "插件内置字体", true)
-        return listOf(bundled) + grouped.map { (name, faces) ->
+        val bundled = listOf(
+            PickerFamily(DEFAULT_LYRIC_FONT_FAMILY, "苹方（默认）", bundledPingFangFaces, "插件内置字体 · 默认"),
+            PickerFamily("", "内置 MiSans", bundledFaces, "插件内置字体", true)
+        )
+        return bundled + grouped.map { (name, faces) ->
             PickerFamily(name, name, faces.distinctBy { it.name }, sources[name].orEmpty(),
                 sources[name]?.contains("VF", true) == true || name.contains("Variable", true))
         }.sortedBy { it.name.lowercase(Locale.getDefault()) }
@@ -105,7 +112,8 @@ internal object FontPickerCatalog {
         if (!Platform.isWindows()) return families
         val locale = Locale.getDefault()
         return families.map { family ->
-            if (family.name.isEmpty() || !localizedCandidates.containsMatchIn(family.name)) return@map family
+            if (family.name.isEmpty() || family.name == DEFAULT_LYRIC_FONT_FAMILY ||
+                !localizedCandidates.containsMatchIn(family.name)) return@map family
             val path = fontPath(family.source) ?: return@map family
             val localized = runCatching {
                 Font.createFonts(path.toFile()).firstOrNull {
@@ -128,6 +136,10 @@ internal object FontPickerCatalog {
     }
 
     private val localizedCandidates = Regex("(?i)(?:SC|TC|YaHei|Kai|Sim|Song|Hei|Fang|Ping|Hiragino|Yu|Noto)")
+
+    private val bundledPingFangFaces = listOf(
+        PickerFace(DEFAULT_LYRIC_FONT_FAMILY, LyricFontWeight.REGULAR, false)
+    )
 
     private val bundledFaces = listOf(
         PickerFace("", LyricFontWeight.LIGHT, false),

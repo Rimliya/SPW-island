@@ -41,6 +41,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import io.github.gaboron.spwisland.core.DEFAULT_LYRIC_FONT_FAMILY
 import io.github.gaboron.spwisland.core.IslandSettings
 import io.github.gaboron.spwisland.core.LyricFontWeight
 import kotlinx.coroutines.Dispatchers
@@ -135,10 +136,13 @@ internal fun FontPickerContent(current: IslandSettings, onCancel: () -> Unit, on
                                 }
                                 .then(if (active) Modifier.border(1.dp, Accent, RoundedCornerShape(8.dp)) else Modifier)
                                 .padding(horizontal = 16.dp, vertical = 9.dp)) {
-                                Text(if (item.name.isEmpty()) "MiSans" else item.name, color = White,
+                                Text(familyDisplayName(item.name), color = White,
                                     fontSize = 15.sp, maxLines = 1)
-                                val subtitle = if (item.name.isEmpty()) "插件默认 · 多语言回退" else
-                                    item.localizedName.takeIf { it != item.name }
+                                val subtitle = when {
+                                    item.name.isEmpty() -> "插件内置 · 多语言回退"
+                                    item.name == DEFAULT_LYRIC_FONT_FAMILY -> "插件内置 · 默认字体"
+                                    else -> item.localizedName.takeIf { it != item.name }
+                                }
                                 if (subtitle != null) Text(subtitle, color = Muted, fontSize = 12.sp, maxLines = 1)
                             }
                         }
@@ -150,7 +154,7 @@ internal fun FontPickerContent(current: IslandSettings, onCancel: () -> Unit, on
                     .padding(17.dp)) {
                     Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                         Column(Modifier.weight(1f)) {
-                            Text(if (selected.isEmpty()) "MiSans" else selected, color = White,
+                            Text(familyDisplayName(selected), color = White,
                                 fontSize = 25.sp, fontWeight = FontWeight.Bold)
                             Text(family?.source ?: "正在读取字体信息…", color = Muted,
                                 fontSize = 12.sp, maxLines = 1)
@@ -237,6 +241,12 @@ private fun ActionButton(label: String, primary: Boolean, onClick: () -> Unit) {
         .clickable(onClick = onClick).padding(horizontal = 23.dp, vertical = 11.dp)) {
         Text(label, color = White, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
     }
+}
+
+private fun familyDisplayName(name: String): String = when (name) {
+    DEFAULT_LYRIC_FONT_FAMILY -> "苹方（默认）"
+    "" -> "MiSans"
+    else -> name
 }
 
 private fun pickFace(family: PickerFamily?, weight: LyricFontWeight, italic: Boolean): PickerFace? =
