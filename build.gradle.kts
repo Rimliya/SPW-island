@@ -165,6 +165,7 @@ tasks.named<Zip>("plugin") {
     }
     dependsOn(tasks.jar, "sourceArchive", "spoutChecks")
     archiveFileName.set("spw-island-${project.version}.spmod")
+    destinationDirectory.set(layout.buildDirectory.dir("distributions"))
     eachFile {
         if (path.startsWith("lib/")) {
             name = libraryNames[file.canonicalPath] ?: name
