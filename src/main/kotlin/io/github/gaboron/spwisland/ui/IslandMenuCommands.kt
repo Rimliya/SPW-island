@@ -17,6 +17,7 @@ internal class IslandMenuCommands(
                 add(toggle(AUTO_HIDE, "悬停隐藏", value.autoHideOnHover))
             }
             add(toggle(LOW_PERFORMANCE, "低性能模式", value.lowPerformance))
+            if (Platform.isWindows()) add(toggle(SPOUT, "Spout2 输出", value.spout.enabled))
             add(separator())
             add(action(RECOVER, "找回词岛"))
             add(action(RESET_POSITION, "重置位置"))
@@ -29,6 +30,7 @@ internal class IslandMenuCommands(
         val value = store.read()
         when (command) {
             LOW_PERFORMANCE -> store.set("reduced_motion", !value.lowPerformance)
+            SPOUT -> store.set("spout_enabled", !value.spout.enabled)
             CLICK_THROUGH -> {
                 val enable = !value.clickThrough && !value.autoHideOnHover
                 if (!enable && value.autoHideOnHover) store.set("auto_hide_on_hover", false)
@@ -49,6 +51,7 @@ internal class IslandMenuCommands(
 
     private companion object {
         const val LOW_PERFORMANCE = 101
+        const val SPOUT = 108
         const val CLICK_THROUGH = 105
         const val AUTO_HIDE = 106
         const val ENABLED = 107
