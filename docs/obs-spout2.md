@@ -1,6 +1,6 @@
 # OBS 透明词岛（Windows x64）
 
-本地修改版 `0.14.0-spout.1`，基于上游 `v0.14.0`（`4a78d5f`）。
+本地修改版 `1.0.0-spout.1`，基于上游 `v1.0.0`（`8ad331d`）。
 保留原版桌面词岛，并新增独立的 Spout2 视频发送器。
 上一版 `0.10.0-spout.1` 基于 `ef6467ec195536619240efdfcb7870ce7270c909`。
 
@@ -37,7 +37,7 @@
 通过 `JAVA_HOME` 指定 JDK 21 即可，无需更改系统默认 Java。
 
 ```powershell
-.\gradlew.bat pluginWindows spoutChecks --no-daemon
+.\gradlew.bat plugin --no-daemon
 cmake -S native/spout -B build/native-check -A x64 -DSPW_SPOUT_PROBE=ON
 cmake --build build/native-check --config Release
 python src/test/python/native_checks.py
