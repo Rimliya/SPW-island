@@ -13,8 +13,7 @@ internal object IslandLeadingContent {
              centerX: Float, centerY: Float, size: Float, palette: IslandPalette) {
         when (settings.leadingContent) {
             LeadingContent.COVER -> if (settings.coverVisible)
-                cover(g, cover, centerX, centerY, size * settings.coverScale / 100f, palette.spectrum,
-                    settings.coverVinylRing)
+                cover(g, cover, centerX, centerY, size * settings.coverScale / 100f, palette.spectrum)
             LeadingContent.SPECTRUM -> drawSpectrum(g, bands, centerX, centerY, size, palette.spectrum)
             LeadingContent.NONE -> Unit
         }
@@ -36,20 +35,10 @@ internal object IslandLeadingContent {
     }
 
     private fun cover(g: Graphics2D, artwork: CoverArtwork?, centerX: Float, centerY: Float,
-                      size: Float, accent: Color, vinylRing: Boolean) {
+                      size: Float, accent: Color) {
         val scale = size / BASE_SIZE
         val x = centerX - size / 2f
         val y = centerY - size / 2f
-        if (vinylRing) {
-            val radius = size * .62f
-            g.color = Color(8, 9, 12, 150)
-            g.fill(Ellipse2D.Float(centerX - radius, centerY - radius, radius * 2, radius * 2))
-            g.color = Color(255, 255, 255, 24)
-            g.draw(Ellipse2D.Float(centerX - radius, centerY - radius, radius * 2, radius * 2))
-            g.color = Color(255, 255, 255, 18)
-            g.draw(Ellipse2D.Float(centerX - radius * .82f, centerY - radius * .82f,
-                radius * 1.64f, radius * 1.64f))
-        }
         val shape = RoundRectangle2D.Float(x, y, size, size, 9f * scale, 9f * scale)
         if (artwork == null) {
             g.color = Color(accent.red, accent.green, accent.blue, 55)

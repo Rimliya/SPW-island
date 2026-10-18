@@ -39,7 +39,6 @@ object IslandSettingsDefaults {
         "mosaic_block" to defaults.mosaicBlock,
         "cover_visible" to defaults.coverVisible,
         "cover_scale" to defaults.coverScale,
-        "cover_vinyl" to defaults.coverVinylRing,
         "font_family" to defaults.fontFamily,
         "font_weight" to defaults.fontWeight.storageName,
         "font_size" to defaults.fontSize,
