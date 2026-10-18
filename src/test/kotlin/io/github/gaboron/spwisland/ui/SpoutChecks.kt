@@ -20,6 +20,8 @@ fun main() {
             val renderer = SpoutRenderer()
             var image = renderer.render(options, snapshot, floatArrayOf(.2f, .5f, .8f, .4f), .1)
             repeat(30) { image = renderer.render(options, snapshot, floatArrayOf(.2f, .5f, .8f, .4f), .1) }
+            renderer.awaitLyricsPreparation()
+            image = renderer.render(options, snapshot, floatArrayOf(.2f, .5f, .8f, .4f), .1)
             ImageIO.write(image, "png", File(directory, "render-${options.spout.width}-${snapshot.positionMs}.png"))
             return (image.raster.dataBuffer as DataBufferInt).data.copyOf().also { renderer.close() }
         }

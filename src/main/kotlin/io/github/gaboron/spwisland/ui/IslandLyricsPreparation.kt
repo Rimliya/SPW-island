@@ -4,6 +4,7 @@ package io.github.gaboron.spwisland.ui
 import io.github.gaboron.spwisland.core.*
 import java.awt.Font
 import java.util.concurrent.ArrayBlockingQueue
+import java.util.concurrent.CountDownLatch
 import java.util.concurrent.RejectedExecutionException
 import java.util.concurrent.ThreadPoolExecutor
 import java.util.concurrent.TimeUnit
@@ -81,6 +82,18 @@ internal class IslandLyricsPreparation(private val layouts: IslandLyricsLayout.C
                     WordGeometry.ready(block.shapedMain, block.main, block.timedWords)
             }
         }
+    }
+
+    /** Test hook: waits until already queued line preparation has run. */
+    internal fun awaitIdle(timeoutMs: Long = 5_000) {
+        if (closed) return
+        val done = CountDownLatch(1)
+        try {
+            worker.execute { done.countDown() }
+        } catch (_: RejectedExecutionException) {
+            return
+        }
+        done.await(timeoutMs, TimeUnit.MILLISECONDS)
     }
 
     override fun close() {
