@@ -18,7 +18,7 @@ internal class IslandGpuSpectrum(private val resources: IslandGpuResources) {
         val values = if (count == 5) IslandVisualColors.fiveBands(bands)
             else IslandVisualColors.resample(bands, count)
         val colors = IslandVisualColors.spectrumColors(settings, palette, values,
-            System.currentTimeMillis(), count)
+            System.currentTimeMillis(), count).map { it.rgb }
         drawBars(canvas, settings, values, colors, centerX - size * .42f, centerY,
             size * .84f, size, size / 32f)
     }
@@ -29,7 +29,7 @@ internal class IslandGpuSpectrum(private val resources: IslandGpuResources) {
         val count = 18
         val values = IslandVisualColors.resample(bands, count)
         val colors = IslandVisualColors.spectrumColors(settings, palette, values,
-            System.currentTimeMillis(), count)
+            System.currentTimeMillis(), count).map { it.rgb }
         val maxHeight = min(height * .34f, 28f).coerceAtLeast(5f)
         drawBars(canvas, settings, values, colors, 14f, height - maxHeight / 2 - 3f,
             (width - 28f).coerceAtLeast(1f), maxHeight * 2, 1f, bottom = true)
