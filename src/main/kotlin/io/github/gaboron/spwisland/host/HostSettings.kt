@@ -35,8 +35,8 @@ class HostSettings(private val manager: ConfigManager, private val changed: () -
         // Native sliders use floating-point values. Persist whole-number settings as integers
         // so reopening SPW does not inherit noisy fractional values from the slider thumb.
         if (!Files.exists(config.getConfigPath()) || !config.reload()) return
-        val migrated = migrateCornerRoundnessForV0100() or normalizeIntegerSettings() or
-            normalizeBackgroundProgressSetting()
+        val migrated = migrateShapeForAppearanceA() or migrateCornerRoundnessForV0100() or
+            normalizeIntegerSettings() or normalizeBackgroundProgressSetting()
         if (migrated) check(saveConfig()) { "词岛旧设置迁移失败，请检查 SPW 配置目录权限。" }
     }
     private fun decode(): IslandSettings = IslandSettings(
@@ -191,6 +191,13 @@ class HostSettings(private val manager: ConfigManager, private val changed: () -
         if (config.get(CORNER_ROUNDNESS_V0100_MIGRATED, false)) return false
         config.set("corner_roundness", 60)
         config.set(CORNER_ROUNDNESS_V0100_MIGRATED, true)
+        return true
+    }
+
+    /** A replaced the two-value pill/notch list; keep old profiles valid in the settings form. */
+    private fun migrateShapeForAppearanceA(): Boolean {
+        if (config.get<Any>("shape", "").toString() != "pill") return false
+        config.set("shape", IslandShape.ROUNDED_RECTANGLE.storageName)
         return true
     }
 
