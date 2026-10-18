@@ -23,7 +23,8 @@ internal class IslandGpuScene : AutoCloseable {
         resources.layer(canvas, Rect.makeLTRB(bounds.minX.toFloat() - 1, bounds.minY.toFloat() - 1,
             bounds.maxX.toFloat() + 1, bounds.maxY.toFloat() + 1), hover.opacity.toFloat()) {
             canvas.clipPath(resources.path(hover.shape), ClipMode.INTERSECT, true)
-            val palette = IslandPalette.from(frame.settings, frame.snapshot.metadata.coverRgb)
+            val palette = IslandPalette.from(frame.settings, frame.snapshot.metadata.coverRgb,
+                frame.snapshot.metadata.cover)
             val liquid = background.draw(canvas, frame, hover, palette, backdrop)
             lyrics.adaptiveContrast.begin(if (liquid) background.materialShader else null,
                 canvas.localToDeviceAsMatrix33, context)
@@ -54,16 +55,16 @@ internal class IslandGpuScene : AutoCloseable {
             VerticalAnchor.BOTTOM -> frame.height - contentHeight
         }
         val lyricHeight = (contentHeight - frame.expansion * IslandTextBlock.EXPANDED_HEIGHT).toFloat().coerceAtLeast(1f)
-        val layout = IslandContentLayout.from(frame.lyrics.blocks.first().mainLineHeight, frame.settings.sideContent.showsSides)
+        val layout = IslandContentLayout.from(frame.lyrics.blocks.first().mainLineHeight, frame.settings.showsSides)
         canvas.scoped {
             canvas.clipPath(resources.path(IslandGeometry.silhouette(frame.width, frame.height, frame.settings.shape,
                 frame.settings.cornerRoundness, frame.settings.squircle)), ClipMode.INTERSECT, true)
             canvas.translate(contentX, contentY)
-            sides.leading(canvas, frame.settings.sideContent, frame.snapshot.metadata.cover, frame.bands,
-                layout.leadingCenterX, lyricHeight / 2, layout.leadingSize, palette.spectrum.rgb)
+            sides.leading(canvas, frame.settings, frame.snapshot.metadata.cover, frame.bands,
+                layout.leadingCenterX, lyricHeight / 2, layout.leadingSize, palette)
             lyrics.rows(canvas, frame, contentWidth, lyricHeight, layout.textInset)
-            sides.trailing(canvas, frame.settings.sideContent, frame.snapshot, frame.bands, layout.statusCenterX(contentWidth),
-                lyricHeight / 2, layout.leadingSize, palette.spectrum.rgb, frame.settings.performance.animateLayout)
+            sides.trailing(canvas, frame.settings, frame.snapshot, frame.bands, layout.statusCenterX(contentWidth),
+                lyricHeight / 2, layout.leadingSize, palette, frame.settings.performance.animateLayout)
         }
         controls.draw(canvas, frame, contentX, contentY, contentWidth, lyricHeight, layout.infoInset, scaleY)
     }

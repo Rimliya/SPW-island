@@ -99,7 +99,7 @@ internal object IslandRuntimeStatus {
     }
 
     private fun spectrum(s: IslandSettings, p: PlaybackSnapshot, fallback: Boolean, source: String): IslandStatusEntry = when {
-        !s.sideContent.showsSpectrum -> IslandStatusEntry("音频频谱", "未显示", "未选择频谱，音频采集已停用。")
+        !s.showsSpectrum -> IslandStatusEntry("音频频谱", "未显示", "频谱布局为“无”，音频采集已停用。")
         !s.enabled -> IslandStatusEntry("音频频谱", "已停用", "词岛关闭，音频采集已停用。")
         !p.playing -> IslandStatusEntry("音频频谱", "等待播放", "暂停时归零，播放后恢复。")
         s.lowPerformance -> IslandStatusEntry("音频频谱", "模拟频谱", "按播放位置生成动画。")

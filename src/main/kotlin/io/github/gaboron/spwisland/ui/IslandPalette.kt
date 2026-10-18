@@ -2,12 +2,14 @@
 package io.github.gaboron.spwisland.ui
 
 import io.github.gaboron.spwisland.core.IslandSettings
+import io.github.gaboron.spwisland.core.CoverArtwork
+import io.github.gaboron.spwisland.platform.CoverColorExtractor
 import java.awt.Color
 import kotlin.math.roundToInt
 import kotlin.math.pow
 
 data class IslandPalette(val lyric: Color, val background: Color, val spectrum: Color,
-                         val lyricOutline: Boolean) {
+                         val lyricOutline: Boolean, val coverColors: List<Color> = emptyList()) {
     companion object {
         private val DEFAULT_BACKGROUND = Color(7, 8, 12)
         private val DIM_LYRIC = Color(126, 129, 138)
@@ -17,19 +19,19 @@ data class IslandPalette(val lyric: Color, val background: Color, val spectrum: 
         private const val MAX_LYRIC_SATURATION = .42f
         private const val MIN_COVER_CONTRAST = 10.0
         private const val MIN_TRANSPARENT_CONTRAST = 4.5
-        private data class CacheKey(val coverRgb: Int?, val backgroundCoverColor: Boolean,
+        private data class CacheKey(val coverRgb: Int?, val cover: CoverArtwork?, val backgroundCoverColor: Boolean,
                                     val lyricCoverColor: Boolean, val spectrumCoverColor: Boolean,
                                     val opacity: Int)
         private var cachedKey: CacheKey? = null
         private var cachedPalette: IslandPalette? = null
 
         @Synchronized
-        fun from(settings: IslandSettings, coverRgb: Int?): IslandPalette {
-            val key = CacheKey(coverRgb, settings.backgroundCoverColor, settings.lyricCoverColor,
+        fun from(settings: IslandSettings, coverRgb: Int?, cover: CoverArtwork? = null): IslandPalette {
+            val key = CacheKey(coverRgb, cover, settings.backgroundCoverColor, settings.lyricCoverColor,
                 settings.spectrumCoverColor, settings.opacity)
             cachedPalette?.let { if (cachedKey == key) return it }
-            val cover = coverRgb?.let { Color(it) }
-            val hsb = cover?.let { Color.RGBtoHSB(it.red, it.green, it.blue, null) }
+            val coverColor = coverRgb?.let { Color(it) }
+            val hsb = coverColor?.let { Color.RGBtoHSB(it.red, it.green, it.blue, null) }
             // The sampled hue is only an accent: keep the background dark and the lyric light.
             val dark = hsb?.let {
                 Color.getHSBColor(it[0], it[1].coerceAtMost(MAX_BACKGROUND_SATURATION), BACKGROUND_BRIGHTNESS)
@@ -38,7 +40,7 @@ data class IslandPalette(val lyric: Color, val background: Color, val spectrum: 
             val sampledBright = hsb?.let { Color.getHSBColor(it[0], it[1].coerceAtMost(.55f), 1f) }
             val lyric = if (settings.lyricCoverColor && hsb != null)
                 brightCoverColor(hsb[0], hsb[1], background) else Color.WHITE
-            val lyricOutline = settings.lyricCoverColor && settings.backgroundCoverColor && cover != null && run {
+            val lyricOutline = settings.lyricCoverColor && settings.backgroundCoverColor && coverColor != null && run {
                 // White content behind a translucent island is the hard case for pale lyric colors.
                 val visibleBackground = overWhite(background, settings.opacity)
                 minOf(contrast(lyric, visibleBackground), contrast(DIM_LYRIC, visibleBackground),
@@ -47,7 +49,8 @@ data class IslandPalette(val lyric: Color, val background: Color, val spectrum: 
             val palette = IslandPalette(
                 lyric, background,
                 if (settings.spectrumCoverColor) sampledBright ?: Color.WHITE else Color.WHITE,
-                lyricOutline)
+                lyricOutline,
+                cover?.let { CoverColorExtractor.palette(it) }.orEmpty().map(::Color))
             cachedKey = key
             cachedPalette = palette
             return palette

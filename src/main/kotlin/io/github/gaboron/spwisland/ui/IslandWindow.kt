@@ -205,7 +205,7 @@ class IslandWindow(private val timeline: PlaybackSource, private val store: Sett
         }
         val visible = settings.enabled && (!settings.hidePaused || snap.playing) && (!settings.hideFullscreen || !fullscreen)
         globalPointer?.setEnabled(clickThrough && settings.autoHideOnHover && visible)
-        val levels = if (!snap.playing || !settings.sideContent.showsSpectrum) FloatArray(4)
+        val levels = if (!snap.playing || !settings.showsSpectrum) FloatArray(4)
             else when (performance.spectrumMode) {
                 SpectrumMode.LIVE -> if (spectrumFallback()) SyntheticSpectrum.levels(snap.positionMs) else spectrum()
                 SpectrumMode.SYNTHETIC -> SyntheticSpectrum.levels(snap.positionMs)

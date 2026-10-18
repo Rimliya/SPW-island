@@ -394,7 +394,7 @@ Windows 和 Linux 共用 `preference_config.json`，平台专属设置在名称�
 | 文件 | 职责 |
 | --- | --- |
 | `LocalTrackMetadata.kt` | 只读获取歌曲时长、内嵌封面和同目录封面 |
-| `CoverColorExtractor.kt` | 从封面中选择有代表性的彩色主色，并尽量避开近黑和近白像素 |
+| `CoverColorExtractor.kt` | 从封面中选择有代表性的多色家族并按封面身份缓存，尽量避开近黑和近白像素 |
 
 #### Windows
 
@@ -576,9 +576,12 @@ LyricPainter
 
 | 文件 | 职责 |
 | --- | --- |
-| `IslandLeadingContent.kt` | 绘制左侧专辑封面或频谱，并缓存封面图像 |
+| `IslandLeadingContent.kt` | 绘制左侧封面或频谱，应用封面显隐、缩放与黑胶环 |
 | `IslandTrailingContent.kt` | 绘制右侧频谱或播放状态 |
-| `IslandPalette.kt` | 根据默认配色、设置和封面主色生成歌词、背景和频谱颜色 |
+| `IslandBackgroundMaterialPainter.kt` | 绘制纯色、线性渐变、多色流光和封面迷彩背景 |
+| `IslandVisualColors.kt` | Java2D 与 Skia 共用的颜色与封面调色板逻辑 |
+| `IslandArtworkImages.kt` | 将封面 ARGB 缓冲转换为复用的 Java2D 图像 |
+| `IslandPalette.kt` | 根据默认配色、设置和封面多色调色板生成歌词、背景和频谱颜色 |
 | `IslandBackgroundProgress.kt` | 在词岛背景中绘制整曲播放进度，包括注水和边缘细线；细线位于胶囊顶部或刘海底部 |
 | `IslandProgressTransition.kt` | 背景进度的非线性淡入淡出和退出样式保留；独立状态由窗口帧更新，绘制不推进动画 |
 | `PlaybackProgress.kt` | 展开状态下的播放进度条和 seek 手势；松手时一次提交，并防止切歌后误 seek |

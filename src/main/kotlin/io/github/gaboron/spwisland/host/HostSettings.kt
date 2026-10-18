@@ -73,12 +73,17 @@ class HostSettings(private val manager: ConfigManager, private val changed: () -
         backgroundProgress = backgroundProgressMode(),
         spectrumCoverColor = config.get("spectrum_cover_color", true),
         fixedWidth = config.get("fixed_width", false),
-        sideContent = when (config.get("leading_content", "cover_spectrum")) {
-            "spectrum" -> SideContent.SPECTRUM
-            "cover" -> SideContent.COVER
-            "none" -> SideContent.NONE
-            else -> SideContent.COVER_SPECTRUM
-        },
+        leadingContent = leadingContentFromStorage(),
+        trailingContent = TrailingContent.fromStorage(config.get("trailing_content", defaultTrailing())),
+        backgroundMaterial = BackgroundMaterial.fromStorage(config.get("background_material", "solid")),
+        gradientAngle = number("gradient_angle", 135, 0, 360),
+        gradientStartColor = config.get("gradient_start", "").trim(),
+        gradientEndColor = config.get("gradient_end", "").trim(),
+        flowSpeed = number("flow_speed", 100, 10, 400),
+        mosaicBlock = number("mosaic_block", 16, 4, 64),
+        coverVisible = config.get("cover_visible", true),
+        coverScale = number("cover_scale", 100, 40, 160),
+        coverVinylRing = config.get("cover_vinyl", false),
         fontFamily = config.get("font_family", DEFAULT_LYRIC_FONT_FAMILY).take(100).trim(),
         fontWeight = LyricFontWeight.fromStorage(
             config.get<Any>("font_weight", "400").toString().toDoubleOrNull()?.toInt()?.toString() ?: "400"
@@ -119,6 +124,22 @@ class HostSettings(private val manager: ConfigManager, private val changed: () -
         }
         if (notify) changed()
         return !retry
+    }
+
+    private fun legacySides(): String = config.get("leading_content", "cover_spectrum")
+
+    private fun leadingContentFromStorage(): LeadingContent = when (legacySides()) {
+        // The old four-value enum shared one leading_content key with the new leading slot.
+        "cover_spectrum", "cover" -> LeadingContent.COVER
+        "spectrum" -> LeadingContent.SPECTRUM
+        "none" -> LeadingContent.NONE
+        else -> LeadingContent.fromStorage(config.get("leading_content", "cover"))
+    }
+
+    private fun defaultTrailing(): String = when (legacySides()) {
+        "cover_spectrum" -> "spectrum"
+        "none" -> "none"
+        else -> "status"
     }
 
     private fun decodePreservingPluginSettings(position: PositionState?, font: FontState?): IslandSettings {
@@ -284,6 +305,10 @@ class HostSettings(private val manager: ConfigManager, private val changed: () -
             "corner_roundness" to IntegerLimits(60, 0, 100),
             "font_size" to IntegerLimits(22, 12, 72),
             "fixed_height" to IntegerLimits(58, 40, 200),
+            "gradient_angle" to IntegerLimits(135, 0, 360),
+            "flow_speed" to IntegerLimits(100, 10, 400),
+            "mosaic_block" to IntegerLimits(16, 4, 64),
+            "cover_scale" to IntegerLimits(100, 40, 160),
             "max_width" to IntegerLimits(640, 280, 1200),
             "opacity" to IntegerLimits(96, 35, 100),
             "offset_ms" to IntegerLimits(0, -2000, 2000)

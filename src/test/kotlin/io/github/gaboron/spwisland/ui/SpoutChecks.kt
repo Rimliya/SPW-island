@@ -4,6 +4,7 @@ package io.github.gaboron.spwisland.ui
 import com.sun.jna.Memory
 import io.github.gaboron.spwisland.core.*
 import java.awt.image.BufferedImage
+import io.github.gaboron.spwisland.platform.CoverColorExtractor
 import java.awt.image.DataBufferInt
 import java.io.File
 import javax.imageio.ImageIO
@@ -107,12 +108,25 @@ fun main() {
         check(compatibility.any { (it ushr 24) > 200 }) { "Empty compatibility raster" }
         check(premultiplied(compatibility)) { "Compatibility pixels are not premultiplied" }
         SpoutPresentation().apply { advance(settings, snap, FloatArray(4), .1, true); close() }
+        check(IslandVisualColors.parseHex("#D04060")?.rgb == 0xD04060)
+        val paletteCover = CoverArtwork(4, 1, intArrayOf(0xffff3020.toInt(), 0xffff3020.toInt(),
+            0xff2060ff.toInt(), 0xff2060ff.toInt()))
+        check(CoverColorExtractor.palette(paletteCover).size >= 2) { "Cover palette did not preserve multiple families" }
+        val materialBase = native(settings.copy(backgroundMaterial = BackgroundMaterial.SOLID), timed)
+        for (material in BackgroundMaterial.entries.filter { it != BackgroundMaterial.SOLID }) {
+            check(!materialBase.contentEquals(native(settings.copy(backgroundMaterial = material), timed))) {
+                "Background material missing from output: $material"
+            }
+        }
+        check(!plain.contentEquals(native(settings.copy(leadingContent = LeadingContent.COVER,
+            coverVinylRing = true), timed))) { "Cover vinyl ring missing from output" }
+        SpoutRenderer().apply { render(settings, snap, FloatArray(4), .1); close() }
         Thread.sleep(200)
         check(Thread.getAllStackTraces().keys.none { it.name == "island-lyrics-preparation" && it.isAlive }) {
             "Closed renderers must stop lyric preparation"
         }
         println("PASS: desktop independence, alpha, premultiplication, karaoke, resize, notch, low performance, idle, " +
-            "background progress, cover colours, fixed width, compatibility raster, renderer cleanup")
+            "background progress, cover colours, fixed width, materials, compatibility raster, renderer cleanup")
     }
 }
 

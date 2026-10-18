@@ -63,7 +63,7 @@ class IslandRuntime : AutoCloseable {
         // The Spout2 output is independent of desktop visibility and keeps its live spectrum.
         spectrum.setEnabled((current.enabled || current.spout.enabled) &&
             current.performance.spectrumMode == SpectrumMode.LIVE &&
-            current.sideContent.showsSpectrum && (!Platform.isLinux() || timeline.snapshot().playing))
+            current.showsSpectrum && (!Platform.isLinux() || timeline.snapshot().playing))
     }
     fun recover() = safely {
         settings.set("auto_hide_on_hover", false); settings.set("click_through", false)
