@@ -77,6 +77,8 @@ tasks.processResources {
         into("native/compose")
         include("skiko-windows-x64.dll", "icudtl.dat")
     }
+    from("src/linux/resources") { exclude("**/__pycache__/**", "**/*.pyc", "native/gnome-pointer/**") }
+    from(gnomePointer) { into("native") }
     inputs.property("projectUrl", projectUrl)
     filesMatching("project.properties") { expand("projectUrl" to projectUrl.get()) }
 }
