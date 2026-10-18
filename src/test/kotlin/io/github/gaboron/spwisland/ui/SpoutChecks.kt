@@ -63,7 +63,7 @@ fun main() {
         check(!plain.contentEquals(frame(settings.copy(fixedWidth = true, maxWidth = 1000), timed))) {
             "Fixed width ignored by output"
         }
-        check(IslandVisualColors.parseHex("#D04060")?.rgb == 0xD04060)
+        check(IslandVisualColors.parseHex("#D04060")?.rgb == 0xFFD04060.toInt())
         check(IslandVisualColors.fiveBands(floatArrayOf(0f, 1f, .5f, 0f)).contentEquals(
             floatArrayOf(0f, .75f, .75f, .375f, 0f)))
         val paletteCover = CoverArtwork(4, 1, intArrayOf(0xffff3020.toInt(), 0xffff3020.toInt(),

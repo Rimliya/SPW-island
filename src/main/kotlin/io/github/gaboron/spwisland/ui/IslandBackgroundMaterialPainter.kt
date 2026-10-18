@@ -90,34 +90,31 @@ internal object IslandBackgroundMaterialPainter {
     private fun mosaic(g: Graphics2D, shape: Shape, width: Int, height: Int, settings: IslandSettings,
                        palette: IslandPalette, alpha: Int) {
         solid(g, shape, palette, alpha)
-        val artwork = palette.coverColors.takeIf { it.isNotEmpty() }
         val clip = g.clip
         val composite = g.composite
         try {
             g.clip(shape)
-            if (artwork != null) {
-                val accents = IslandVisualColors.accents(palette)
-                val block = settings.mosaicBlock.coerceIn(4, 64)
-                var y = 0
-                var row = 0
-                while (y < height) {
-                    var x = 0
-                    var column = 0
-                    while (x < width) {
-                        val color = accents[(row * 7 + column * 3) % accents.size]
-                        g.color = IslandVisualColors.withAlpha(color,
-                            (34 * settings.opacity / 100.0).roundToInt())
-                        g.fillRect(x, y, block + 1, block + 1)
-                        x += block
-                        column++
-                    }
-                    y += block
-                    row++
+            val accents = IslandVisualColors.accents(palette)
+            val block = settings.mosaicBlock.coerceIn(4, 64)
+            var y = 0
+            var row = 0
+            while (y < height) {
+                var x = 0
+                var column = 0
+                while (x < width) {
+                    val color = accents[(row * 7 + column * 3) % accents.size]
+                    g.color = IslandVisualColors.withAlpha(color,
+                        (34 * settings.opacity / 100.0).roundToInt())
+                    g.fillRect(x, y, block + 1, block + 1)
+                    x += block
+                    column++
                 }
-                g.composite = AlphaComposite.SrcOver.derive(settings.opacity / 140f)
-                g.color = Color(4, 5, 9)
-                g.fill(shape)
+                y += block
+                row++
             }
+            g.composite = AlphaComposite.SrcOver.derive(settings.opacity / 140f)
+            g.color = Color(4, 5, 9)
+            g.fill(shape)
         } finally {
             g.composite = composite
             g.clip = clip
