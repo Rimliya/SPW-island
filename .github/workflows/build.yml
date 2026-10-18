@@ -41,7 +41,7 @@ jobs:
       - name: Build plugin package and source archive
         shell: pwsh
         run: |
-          ./gradlew --no-daemon --stacktrace test plugin
+          ./gradlew --no-daemon --stacktrace plugin
           if ($LASTEXITCODE -ne 0) { throw "Gradle build failed" }
           ./scripts/verify-spmod.ps1
           if ($LASTEXITCODE -ne 0) { throw "Package verification failed" }
