@@ -41,7 +41,7 @@ internal class LinuxIslandProcess(private val timeline: PlaybackSource, private 
                 val now = System.nanoTime()
                 if (now >= nextState) {
                     spectrum.setEnabled(currentSettings.enabled && snapshot.playing &&
-                        currentSettings.sideContent.showsSpectrum && currentSettings.performance.spectrumMode == SpectrumMode.LIVE)
+                        currentSettings.showsSpectrum && currentSettings.performance.spectrumMode == SpectrumMode.LIVE)
                     val state = IslandState(snapshot.copy(metadata = TrackMetadata(), lyrics = emptyList()),
                         currentSettings.takeIf { it != previousSettings },
                         snapshot.metadata.takeIf { it != previousMetadata },
@@ -54,7 +54,7 @@ internal class LinuxIslandProcess(private val timeline: PlaybackSource, private 
                     nextState = if (nextState == 0L || now - nextState > 100_000_000L)
                         now + 100_000_000L else nextState + 100_000_000L
                 }
-                val live = currentSettings.enabled && snapshot.playing && currentSettings.sideContent.showsSpectrum &&
+                val live = currentSettings.enabled && snapshot.playing && currentSettings.showsSpectrum &&
                     currentSettings.performance.spectrumMode == SpectrumMode.LIVE
                 if (live || live != audioEnabled || spectrum.status != lastAudioStatus) {
                     output.writeObject(IslandSpectrum(if (live) spectrum.levels() else FloatArray(4),

@@ -1,33 +1,32 @@
 // SPDX-License-Identifier: GPL-3.0-only
 package io.github.gaboron.spwisland.ui
 
-import io.github.gaboron.spwisland.core.PlaybackSnapshot
-import io.github.gaboron.spwisland.core.SideContent
+import io.github.gaboron.spwisland.core.*
 import java.awt.Color
 import java.awt.Graphics2D
 import java.awt.geom.Ellipse2D
 import java.awt.geom.RoundRectangle2D
 import kotlin.math.sin
 
-/** Paints the configured trailing spectrum or the legacy playback status. */
-object IslandTrailingContent {
-    fun draw(g: Graphics2D, mode: SideContent, snapshot: PlaybackSnapshot, bands: FloatArray,
-             centerX: Float, centerY: Float, size: Float, accent: Color, animate: Boolean) {
-        when (mode) {
-            SideContent.COVER_SPECTRUM ->
-                IslandLeadingContent.drawSpectrum(g, bands, centerX, centerY, size, accent)
-            SideContent.SPECTRUM, SideContent.COVER -> drawStatus(g, snapshot, centerX, centerY, animate)
-            SideContent.NONE -> Unit
+/** Paints the configured trailing spectrum or the playback status. */
+internal object IslandTrailingContent {
+    fun draw(g: Graphics2D, settings: IslandSettings, snapshot: PlaybackSnapshot, bands: FloatArray,
+             centerX: Float, centerY: Float, size: Float, palette: IslandPalette, animate: Boolean) {
+        when (settings.trailingContent) {
+            TrailingContent.SPECTRUM ->
+                IslandLeadingContent.drawSpectrum(g, bands, centerX, centerY, size, palette.spectrum)
+            TrailingContent.STATUS -> drawStatus(g, snapshot, centerX, centerY, animate)
+            TrailingContent.NONE -> Unit
         }
     }
 
     private fun drawStatus(g: Graphics2D, snapshot: PlaybackSnapshot, centerX: Float, centerY: Float,
                            animate: Boolean) {
         if (snapshot.line == null && snapshot.lyrics.isEmpty() && snapshot.playing) {
-            for (i in 0..2) {
-                val alpha = if (animate) (150 + 90 * sin(snapshot.positionMs / 350.0 - i)).toInt() else 150
+            for (index in 0..2) {
+                val alpha = if (animate) (150 + 90 * sin(snapshot.positionMs / 350.0 - index)).toInt() else 150
                 g.color = Color(190, 204, 221, alpha)
-                g.fill(Ellipse2D.Float(centerX - 8f + i * 7f, centerY - 2f, 4f, 4f))
+                g.fill(Ellipse2D.Float(centerX - 8f + index * 7f, centerY - 2f, 4f, 4f))
             }
         } else {
             g.color = Color(115, 131, 149)

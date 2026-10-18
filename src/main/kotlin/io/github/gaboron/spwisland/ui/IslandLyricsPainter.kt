@@ -29,7 +29,7 @@ object IslandLyricsPainter {
             copy.translate(width / 2.0, height / 2.0 + offset)
             copy.scale(scale, scale); copy.translate(-width / 2.0, -height / 2.0)
             val available = width - inset * 2
-            val palette = IslandPalette.from(settings, snapshot.metadata.coverRgb)
+            val palette = IslandPalette.from(settings, snapshot.metadata.coverRgb, snapshot.metadata.cover)
             LyricPainter.draw(copy, block.main, block.timedWords,
                 if (block.timedWords.isNotEmpty()) time else (time - (line?.startMs ?: 0)).coerceAtLeast(0),
                 inset, row.mainBaseline, available, block.mainFont, settings.karaoke,

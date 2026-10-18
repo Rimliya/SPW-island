@@ -14,7 +14,7 @@ class IslandLyricsLayout private constructor(snapshot: PlaybackSnapshot, private
     private val rowGap = if (blocks.size > 1) maxOf(8f, settings.fontSize * .36f) else 0f
     private val contentHeight = blocks.sumOf { it.height.toDouble() }.toFloat() + rowGap * (blocks.size - 1)
     private val contentLayout = IslandContentLayout.from(
-        blocks.first().mainLineHeight, settings.sideContent.showsSides
+        blocks.first().mainLineHeight, settings.showsSides
     )
     val preferredHeight = maxOf(settings.fontSize + 28, ceil(contentHeight + 28).toInt(),
         contentLayout.minimumLyricHeight)
@@ -36,7 +36,7 @@ class IslandLyricsLayout private constructor(snapshot: PlaybackSnapshot, private
             if (settings.karaoke && block.timedWords.isNotEmpty()) settings.fontSize * .32f else 0f
         }
         val horizontal = IslandContentLayout.from(
-            blocks.first().mainLineHeight, settings.sideContent.showsSides
+            blocks.first().mainLineHeight, settings.showsSides
         )
         val needed = ceil(blocks.maxOf { maxOf(it.shapedMain.width + motionPad, it.shapedSub?.width ?: 0f) } +
             horizontal.textInset * 2).toInt()

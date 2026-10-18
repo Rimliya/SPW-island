@@ -53,12 +53,24 @@ internal class IslandGpuResources : AutoCloseable {
     }
 
     fun gradient(start: Float, end: Float, colors: IntArray, stops: FloatArray, alpha: Float = 1f): NativePaint {
-        val next = Shader.makeLinearGradient(start, 0f, end, 0f, Gradient(Gradient.Colors(
+        val next = Shader.makeLinearGradient(start, 0f, end, 0f, gradientColors(colors, stops))
+        return shaderPaint(next, alpha, BlendMode.SRC_OVER)
+    }
+
+    fun linearGradient(x0: Float, y0: Float, x1: Float, y1: Float, colors: IntArray, stops: FloatArray,
+                       alpha: Float = 1f, blend: BlendMode = BlendMode.SRC_OVER): NativePaint {
+        val next = Shader.makeLinearGradient(x0, y0, x1, y1, gradientColors(colors, stops))
+        return shaderPaint(next, alpha, blend)
+    }
+
+    private fun gradientColors(colors: IntArray, stops: FloatArray) = Gradient(Gradient.Colors(
             colors.map { Color4f((it ushr 16 and 255) / 255f, (it ushr 8 and 255) / 255f,
-                (it and 255) / 255f, (it ushr 24) / 255f) }.toTypedArray(), stops, FilterTileMode.CLAMP)))
+                (it and 255) / 255f, (it ushr 24) / 255f) }.toTypedArray(), stops, FilterTileMode.CLAMP))
+
+    private fun shaderPaint(next: Shader, alpha: Float, blend: BlendMode): NativePaint {
         fill.shader = next; shader?.close(); shader = next
-        fill.setAlphaf(alpha); fill.blendMode = BlendMode.SRC_OVER
-        fillColor = null; fillAlpha = alpha; fillBlend = BlendMode.SRC_OVER
+        fill.setAlphaf(alpha); fill.blendMode = blend
+        fillColor = null; fillAlpha = alpha; fillBlend = blend
         return fill
     }
 

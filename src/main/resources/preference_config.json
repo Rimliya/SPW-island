@@ -193,21 +193,49 @@
         {
           "type": "list",
           "key": "leading_content",
-          "title": "两侧信息",
+          "title": "左侧插槽",
           "entries": [
-            "左侧封面 + 右侧频谱",
-            "左侧实时频谱",
-            "左侧专辑封面",
-            "都不显示"
+            "专辑封面",
+            "实时频谱",
+            "不显示"
           ],
           "entry_values": [
-            "cover_spectrum",
-            "spectrum",
             "cover",
+            "spectrum",
             "none"
           ],
-          "default_value": "cover_spectrum",
-          "summary": "单项模式沿用左侧内容与右侧播放状态；封面来自本地音频内嵌图片或同目录 cover/folder 图片。"
+          "default_value": "cover",
+          "summary": "封面来自本地音频内嵌图片或同目录 cover/folder 图片。"
+        },
+        {
+          "type": "list",
+          "key": "trailing_content",
+          "title": "右侧插槽",
+          "entries": ["播放状态", "频谱", "不显示"],
+          "entry_values": ["status", "spectrum", "none"],
+          "default_value": "spectrum",
+          "summary": "频谱使用经典四柱样式；播放状态在无歌词时显示等待或播放动画。"
+        },
+        {
+          "type": "switch",
+          "key": "cover_visible",
+          "title": "显示封面",
+          "default_value": true
+        },
+        {
+          "type": "seekbar",
+          "key": "cover_scale",
+          "title": "封面缩放 %",
+          "default_value": 100,
+          "min": 40,
+          "max": 160
+        },
+        {
+          "type": "switch",
+          "key": "cover_vinyl",
+          "title": "封面黑胶环",
+          "default_value": false,
+          "summary": "在封面后绘制深色唱片环与细纹。"
         },
         {
           "type": "list",
@@ -223,6 +251,53 @@
           ],
           "default_value": "classic",
           "summary": "液态玻璃使用实时桌面模糊、边缘折射、轻微色散与方向高光，需要 Windows 11 及 SDR 显示器。背景不取封面颜色；不透明度调节中性基底。启用时词岛从系统录屏中排除；低性能或捕获不可用时使用经典背景，原因见关于窗口。"
+        },
+        {
+          "type": "list",
+          "key": "background_material",
+          "title": "经典背景材质",
+          "entries": ["纯色", "线性渐变", "多色流光", "封面迷彩碎色"],
+          "entry_values": ["solid", "gradient", "flow", "mosaic"],
+          "default_value": "solid",
+          "summary": "仅经典背景生效；液态玻璃保持自身表面。流光与迷彩使用封面多色调色板。"
+        },
+        {
+          "type": "seekbar",
+          "key": "gradient_angle",
+          "title": "渐变角度 °",
+          "default_value": 135,
+          "min": 0,
+          "max": 360
+        },
+        {
+          "type": "edittext",
+          "key": "gradient_start",
+          "title": "渐变起始色（#RRGGBB）",
+          "default_value": "",
+          "summary": "留空时使用背景色派生；支持 #RRGGBB 或 RRGGBB。"
+        },
+        {
+          "type": "edittext",
+          "key": "gradient_end",
+          "title": "渐变结束色（#RRGGBB）",
+          "default_value": "",
+          "summary": "留空时使用频谱主色。"
+        },
+        {
+          "type": "seekbar",
+          "key": "flow_speed",
+          "title": "流光速度 %",
+          "default_value": 100,
+          "min": 10,
+          "max": 400
+        },
+        {
+          "type": "seekbar",
+          "key": "mosaic_block",
+          "title": "迷彩碎色块大小 px",
+          "default_value": 16,
+          "min": 4,
+          "max": 64
         },
         {
           "type": "seekbar",

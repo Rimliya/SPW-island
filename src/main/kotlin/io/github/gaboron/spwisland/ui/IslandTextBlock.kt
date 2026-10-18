@@ -24,12 +24,12 @@ class IslandTextBlock(snapshot: PlaybackSnapshot, private val settings: IslandSe
     val gap = if (sub == null) 0f else 8f
     val height = shapedMain.height + gap + (shapedSub?.height ?: 0f)
     val preferredHeight = maxOf(settings.fontSize + 28, ceil(height + 28).toInt(),
-        IslandContentLayout.from(mainLineHeight, settings.sideContent.showsSides).minimumLyricHeight)
+        IslandContentLayout.from(mainLineHeight, settings.showsSides).minimumLyricHeight)
 
     fun size(maxWidth: Int, expanded: Boolean): Dimension {
         val motionPad = if (settings.karaoke && timedWords.isNotEmpty()) settings.fontSize * .32f else 0f
         val content = IslandContentLayout.from(
-            mainLineHeight, settings.sideContent.showsSides
+            mainLineHeight, settings.showsSides
         )
         val needed = ceil(maxOf(shapedMain.width + motionPad, shapedSub?.width ?: 0f) +
             content.textInset * 2).toInt()

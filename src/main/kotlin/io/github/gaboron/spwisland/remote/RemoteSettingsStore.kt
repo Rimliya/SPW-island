@@ -55,5 +55,16 @@ private fun IslandSettings.withSetting(key: String, value: Any): IslandSettings 
     "background_cover_color" -> copy(backgroundCoverColor = value as Boolean)
     "spectrum_cover_color" -> copy(spectrumCoverColor = value as Boolean)
     "fixed_width" -> copy(fixedWidth = value as Boolean)
+    "leading_content" -> copy(leadingContent = LeadingContent.fromStorage(value.toString()))
+    "trailing_content" -> copy(trailingContent = TrailingContent.fromStorage(value.toString()))
+    "background_material" -> copy(backgroundMaterial = BackgroundMaterial.fromStorage(value.toString()))
+    "gradient_angle" -> copy(gradientAngle = value.toString().toIntOrNull() ?: gradientAngle)
+    "gradient_start" -> copy(gradientStartColor = value.toString())
+    "gradient_end" -> copy(gradientEndColor = value.toString())
+    "flow_speed" -> copy(flowSpeed = value.toString().toIntOrNull() ?: flowSpeed)
+    "mosaic_block" -> copy(mosaicBlock = value.toString().toIntOrNull() ?: mosaicBlock)
+    "cover_visible" -> copy(coverVisible = value as Boolean)
+    "cover_scale" -> copy(coverScale = value.toString().toIntOrNull() ?: coverScale)
+    "cover_vinyl" -> copy(coverVinylRing = value as Boolean)
     else -> this
 }

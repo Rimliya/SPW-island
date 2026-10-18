@@ -2,6 +2,7 @@
 package io.github.gaboron.spwisland.ui
 
 import io.github.gaboron.spwisland.core.*
+import io.github.gaboron.spwisland.platform.CoverColorExtractor
 import java.awt.image.DataBufferInt
 import java.io.File
 import javax.imageio.ImageIO
@@ -62,12 +63,24 @@ fun main() {
         check(!plain.contentEquals(frame(settings.copy(fixedWidth = true, maxWidth = 1000), timed))) {
             "Fixed width ignored by output"
         }
+        check(IslandVisualColors.parseHex("#D04060")?.rgb == 0xD04060)
+        val paletteCover = CoverArtwork(4, 1, intArrayOf(0xffff3020.toInt(), 0xffff3020.toInt(),
+            0xff2060ff.toInt(), 0xff2060ff.toInt()))
+        check(CoverColorExtractor.palette(paletteCover).size >= 2) { "Cover palette did not preserve multiple families" }
+        val materialBase = frame(settings.copy(backgroundMaterial = BackgroundMaterial.SOLID), timed)
+        for (material in BackgroundMaterial.entries.filter { it != BackgroundMaterial.SOLID }) {
+            check(!materialBase.contentEquals(frame(settings.copy(backgroundMaterial = material), timed))) {
+                "Background material missing from output: $material"
+            }
+        }
+        check(!plain.contentEquals(frame(settings.copy(leadingContent = LeadingContent.COVER,
+            coverVinylRing = true), timed))) { "Cover vinyl ring missing from output" }
         SpoutRenderer().apply { render(settings, snap, FloatArray(4), .1); close() }
         Thread.sleep(200)
         check(Thread.getAllStackTraces().keys.none { it.name == "island-lyrics-preparation" && it.isAlive }) {
             "Closed renderers must stop lyric preparation"
         }
         println("PASS: desktop independence, alpha, premultiplication, karaoke, resize, notch, low performance, idle, " +
-            "background progress, cover colours, fixed width, renderer cleanup")
+            "background progress, cover colours, fixed width, materials, renderer cleanup")
     }
 }

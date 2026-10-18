@@ -5,6 +5,10 @@ import io.github.gaboron.spwisland.core.*
 import io.github.gaboron.spwisland.ui.*
 import org.jetbrains.skia.*
 import java.awt.Color
+import kotlin.math.abs
+import kotlin.math.cos
+import kotlin.math.max
+import kotlin.math.sin
 import kotlin.math.roundToInt
 import io.github.gaboron.spwisland.platform.WindowsDesktopBackdrop
 
@@ -41,9 +45,7 @@ internal class IslandGpuBackground(private val resources: IslandGpuResources) : 
                              replace: Boolean = false) {
         val alpha = frame.settings.opacity * 255 / 100
         val background = palette.background
-        val base = background.rgb and 0xffffff
-        if (!liquid) canvas.drawPath(path, resources.fill(base or (alpha shl 24),
-            blend = if (replace) BlendMode.SRC else BlendMode.SRC_OVER))
+        if (!liquid) classic(canvas, frame, palette, path, alpha, replace)
         if (progress > 0 && frame.snapshot.track != null && frame.snapshot.status != PlaybackStatus.IDLE &&
             frame.settings.performance.renderBackgroundProgress && frame.progressOpacity > 0) {
             when (frame.progressMode) {
@@ -74,6 +76,81 @@ internal class IslandGpuBackground(private val resources: IslandGpuResources) : 
     }
 
     override fun close() = glass.close()
+
+    private fun classic(canvas: Canvas, frame: IslandGpuFrame, palette: IslandPalette, path: Path,
+                        alpha: Int, replace: Boolean) {
+        val blend = if (replace) BlendMode.SRC else BlendMode.SRC_OVER
+        when (frame.settings.backgroundMaterial) {
+            BackgroundMaterial.SOLID ->
+                canvas.drawPath(path, resources.fill((palette.background.rgb and 0xffffff) or (alpha shl 24), blend = blend))
+            BackgroundMaterial.LINEAR_GRADIENT -> {
+                val start = IslandVisualColors.parseHex(frame.settings.gradientStartColor)
+                    ?: IslandVisualColors.shade(palette.background, 1.45)
+                val end = IslandVisualColors.parseHex(frame.settings.gradientEndColor) ?: palette.spectrum
+                val angle = Math.toRadians(frame.settings.gradientAngle.toDouble())
+                val dx = cos(angle).toFloat()
+                val dy = sin(angle).toFloat()
+                val half = (abs(dx) * frame.width + abs(dy) * frame.height) / 2f
+                val cx = frame.width / 2f
+                val cy = frame.height / 2f
+                val paint = resources.linearGradient(cx - dx * half, cy - dy * half,
+                    cx + dx * half, cy + dy * half,
+                    intArrayOf(IslandVisualColors.argb(IslandVisualColors.withAlpha(start, alpha)),
+                        IslandVisualColors.argb(IslandVisualColors.withAlpha(end, alpha))),
+                    floatArrayOf(0f, 1f), blend = blend)
+                canvas.drawPath(path, paint)
+            }
+            BackgroundMaterial.FLOWING_LIGHT -> {
+                canvas.drawPath(path, resources.fill((palette.background.rgb and 0xffffff) or (alpha shl 24), blend = blend))
+                val accents = IslandVisualColors.accents(palette)
+                val seconds = System.currentTimeMillis() / 1000.0 * frame.settings.flowSpeed / 100.0
+                val radius = max(frame.width, frame.height) * .62f
+                for (index in accents.indices) {
+                    val phase = index * 1.37
+                    val cx = frame.width * (.15f + .18f * index) + sin(seconds * .32 + phase).toFloat() * frame.width * .16f
+                    val cy = frame.height * .5f + cos(seconds * .27 + phase * 1.7).toFloat() * frame.height * .42f
+                    val color = accents[index % accents.size]
+                    for (layer in 0 until 7) {
+                        val scale = 1.0 - layer * .12
+                        val fade = ((layer + 1) * 4).coerceAtMost(30) * frame.settings.opacity / 100
+                        if (fade > 0) canvas.drawCircle(cx, cy, radius * scale.toFloat(),
+                            resources.fill(IslandVisualColors.argb(IslandVisualColors.withAlpha(color, fade))))
+                    }
+                }
+            }
+            BackgroundMaterial.COVER_MOSAIC -> {
+                canvas.drawPath(path, resources.fill((palette.background.rgb and 0xffffff) or (alpha shl 24), blend = blend))
+                val cover = frame.snapshot.metadata.cover
+                if (cover != null) {
+                    val source = minOf(cover.width, cover.height).toFloat()
+                    canvas.drawImageRect(resources.cover(cover),
+                        Rect.makeXYWH((cover.width - source) / 2, (cover.height - source) / 2, source, source),
+                        Rect.makeWH(frame.width.toFloat(), frame.height.toFloat()), SamplingMode.LINEAR,
+                        resources.fill(0xffffffff.toInt(), frame.settings.opacity / 180f), true)
+                    canvas.drawPath(path, resources.fill(
+                        ((frame.settings.opacity * 110 / 100) shl 24) or 0x040509))
+                }
+                val accents = IslandVisualColors.accents(palette)
+                val block = frame.settings.mosaicBlock.coerceIn(4, 64)
+                val blockAlpha = 34 * frame.settings.opacity / 100
+                var y = 0
+                var row = 0
+                while (y < frame.height) {
+                    var x = 0
+                    var column = 0
+                    while (x < frame.width) {
+                        val color = accents[(row * 7 + column * 3) % accents.size]
+                        canvas.drawRect(Rect.makeXYWH(x.toFloat(), y.toFloat(), block.toFloat(), block.toFloat()),
+                            resources.fill(IslandVisualColors.argb(IslandVisualColors.withAlpha(color, blockAlpha))))
+                        x += block
+                        column++
+                    }
+                    y += block
+                    row++
+                }
+            }
+        }
+    }
 
     private fun edge(canvas: Canvas, start: Float, end: Float, filled: Float, y: Float, color: Int, alpha: Int) {
         val rgb = color and 0xffffff

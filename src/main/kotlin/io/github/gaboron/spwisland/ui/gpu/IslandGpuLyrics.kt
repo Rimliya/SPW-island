@@ -16,7 +16,7 @@ internal class IslandGpuLyrics(private val resources: IslandGpuResources) {
         IslandLyricPresentation.rows(frame.lyrics, frame.previousLyrics, height, frame.transition, frame.settings.fontSize).forEach { pose ->
             val snapshot = if (pose.previous) frame.outgoing ?: return@forEach else frame.snapshot
             val block = pose.layout.block
-            val palette = IslandPalette.from(frame.settings, snapshot.metadata.coverRgb)
+            val palette = IslandPalette.from(frame.settings, snapshot.metadata.coverRgb, snapshot.metadata.cover)
             val time = snapshot.positionMs + frame.settings.offsetMs
             canvas.scoped {
                 canvas.clipRect(Rect.makeXYWH(inset - 8, 2f, width - inset * 2 + 16, height - 4f), ClipMode.INTERSECT, true)

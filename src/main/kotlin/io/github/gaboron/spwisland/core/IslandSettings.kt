@@ -3,12 +3,7 @@ package io.github.gaboron.spwisland.core
 
 const val DEFAULT_LYRIC_FONT_FAMILY = "@island-default"
 
-enum class SideContent(val showsSpectrum: Boolean, val showsSides: Boolean) {
-    COVER_SPECTRUM(true, true),
-    SPECTRUM(true, true),
-    COVER(false, true),
-    NONE(false, false)
-}
+
 enum class BackgroundProgressMode { OFF, FILL, TOP_LINE }
 
 enum class IslandBackgroundStyle(val storageName: String) {
@@ -45,7 +40,17 @@ data class IslandSettings(
     val backgroundProgress: BackgroundProgressMode = BackgroundProgressMode.OFF,
     val spectrumCoverColor: Boolean = true,
     val fixedWidth: Boolean = false,
-    val sideContent: SideContent = SideContent.COVER_SPECTRUM,
+    val leadingContent: LeadingContent = LeadingContent.COVER,
+    val trailingContent: TrailingContent = TrailingContent.SPECTRUM,
+    val backgroundMaterial: BackgroundMaterial = BackgroundMaterial.SOLID,
+    val gradientAngle: Int = 135,
+    val gradientStartColor: String = "",
+    val gradientEndColor: String = "",
+    val flowSpeed: Int = 100,
+    val mosaicBlock: Int = 16,
+    val coverVisible: Boolean = true,
+    val coverScale: Int = 100,
+    val coverVinylRing: Boolean = false,
     val fontFamily: String = DEFAULT_LYRIC_FONT_FAMILY,
     val fontWeight: LyricFontWeight = LyricFontWeight.REGULAR,
     val fontSize: Int = 22,
@@ -61,6 +66,14 @@ data class IslandSettings(
 ) : java.io.Serializable {
     /** Notch motion, placement and occlusion still branch on this boolean. */
     val notch: Boolean get() = shape == IslandShape.NOTCH
+
+    /** Either slot reserves the shared side gutter. */
+    val showsSides: Boolean
+        get() = leadingContent != LeadingContent.NONE || trailingContent != TrailingContent.NONE
+
+    /** Audio capture and spectrum drawing are active while either slot shows the spectrum. */
+    val showsSpectrum: Boolean
+        get() = leadingContent == LeadingContent.SPECTRUM || trailingContent == TrailingContent.SPECTRUM
 }
 
 interface SettingsStore {

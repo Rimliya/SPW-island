@@ -156,7 +156,7 @@ class IslandPanel(private val actions: PlaybackActions, report: (Throwable) -> U
         val lyricAreaBottom = (height - reveal * IslandTextBlock.EXPANDED_HEIGHT).roundToInt()
         progress.setBounds((width - PlaybackProgress.FIXED_WIDTH) / 2,
             lyricAreaBottom + 60, PlaybackProgress.FIXED_WIDTH, 28)
-        progress.foreground = IslandPalette.from(settings, snapshot.metadata.coverRgb).lyric
+        progress.foreground = IslandPalette.from(settings, snapshot.metadata.coverRgb, snapshot.metadata.cover).lyric
         val buttons = listOf(previous, play, next)
         buttons.forEachIndexed { index, button ->
             button.setBounds(width / 2 - 81 + index * 56, lyricAreaBottom + 26, 50, 30)
@@ -166,10 +166,8 @@ class IslandPanel(private val actions: PlaybackActions, report: (Throwable) -> U
         if (play.toolTipText != tooltip) play.toolTipText = tooltip
     }
     private fun paintBackground(g: Graphics2D, shape: Shape) {
-        val palette = IslandPalette.from(settings, snapshot.metadata.coverRgb)
-        val background = palette.background
-        g.color = Color(background.red, background.green, background.blue, settings.opacity * 255 / 100)
-        g.fill(shape)
+        val palette = IslandPalette.from(settings, snapshot.metadata.coverRgb, snapshot.metadata.cover)
+        IslandBackgroundMaterialPainter.paint(g, shape, width, height, settings, palette)
         IslandBackgroundProgress.draw(g, shape, width, height, snapshot, settings, palette,
             backgroundProgress.mode, backgroundProgress.opacity)
         g.color = Color(255, 255, 255, 19); g.draw(shape)
@@ -179,7 +177,7 @@ class IslandPanel(private val actions: PlaybackActions, report: (Throwable) -> U
         val g = graphics.create() as Graphics2D
         try {
             val shape = IslandGeometry.silhouette(width, height, settings.shape, settings.cornerRoundness, settings.squircle)
-            val palette = IslandPalette.from(settings, snapshot.metadata.coverRgb)
+            val palette = IslandPalette.from(settings, snapshot.metadata.coverRgb, snapshot.metadata.cover)
             val reveal = expansion ?: if (expanded) 1.0 else 0.0
             val outerWidth = animatedWidth.toFloat()
             val contentHeight = animatedHeight.toFloat()
@@ -204,11 +202,11 @@ class IslandPanel(private val actions: PlaybackActions, report: (Throwable) -> U
             val lyricAreaTop = 0f
             val animation = if (settings.performance.animateLayout) transition else 1.0
             val layout = IslandContentLayout.from(
-                lyricLayout.blocks.first().mainLineHeight, settings.sideContent.showsSides
+                lyricLayout.blocks.first().mainLineHeight, settings.showsSides
             )
-            IslandLeadingContent.draw(g, settings.sideContent, snapshot.metadata.cover,
+            IslandLeadingContent.draw(g, settings, snapshot.metadata.cover,
                 bands, layout.leadingCenterX, lyricAreaTop + lyricAreaHeight / 2f,
-                layout.leadingSize, palette.spectrum)
+                layout.leadingSize, palette)
             val lyrics = g.create() as Graphics2D
             try {
                 lyrics.translate(0.0, lyricAreaTop.toDouble())
@@ -217,9 +215,9 @@ class IslandPanel(private val actions: PlaybackActions, report: (Throwable) -> U
                 IslandLyricsPainter.draw(lyrics, snapshot, outgoing, settings, contentWidth,
                     lyricAreaHeight, animation, layout.textInset, lyricLayout, previousLayout, longTones)
             } finally { lyrics.dispose() }
-            IslandTrailingContent.draw(g, settings.sideContent, snapshot, bands,
+            IslandTrailingContent.draw(g, settings, snapshot, bands,
                 layout.statusCenterX(contentWidth), lyricAreaTop + lyricAreaHeight / 2f,
-                layout.leadingSize, palette.spectrum, settings.performance.animateLayout)
+                layout.leadingSize, palette, settings.performance.animateLayout)
             expandedContent.paint(graphics, width, contentY + lyricAreaHeight - 2.0, reveal) { layer ->
                 val info = layer.create() as Graphics2D
                 try {
