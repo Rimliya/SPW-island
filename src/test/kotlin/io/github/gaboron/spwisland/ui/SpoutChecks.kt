@@ -108,7 +108,7 @@ fun main() {
         check(compatibility.any { (it ushr 24) > 200 }) { "Empty compatibility raster" }
         check(premultiplied(compatibility)) { "Compatibility pixels are not premultiplied" }
         SpoutPresentation().apply { advance(settings, snap, FloatArray(4), .1, true); close() }
-        check(IslandVisualColors.parseHex("#D04060")?.rgb == 0xD04060)
+        check(IslandVisualColors.parseHex("#D04060")?.rgb == 0xFFD04060.toInt())
         val paletteCover = CoverArtwork(4, 1, intArrayOf(0xffff3020.toInt(), 0xffff3020.toInt(),
             0xff2060ff.toInt(), 0xff2060ff.toInt()))
         check(CoverColorExtractor.palette(paletteCover).size >= 2) { "Cover palette did not preserve multiple families" }
