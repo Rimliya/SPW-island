@@ -576,7 +576,7 @@ LyricPainter
 
 | 文件 | 职责 |
 | --- | --- |
-| `IslandLeadingContent.kt` | 绘制左侧封面或频谱，应用封面显隐、缩放与黑胶环 |
+| `IslandLeadingContent.kt` | 绘制左侧封面或频谱，应用封面显隐与缩放 |
 | `IslandTrailingContent.kt` | 绘制右侧频谱、时钟或播放状态 |
 | `IslandBackgroundMaterialPainter.kt` | 绘制纯色、线性渐变、多色流光和封面迷彩背景 |
 | `IslandSpectrumPainter.kt` | 四柱/五柱/底部频谱、实心/折线和取色几何 |
