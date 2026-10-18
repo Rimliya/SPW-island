@@ -98,6 +98,11 @@ class IslandPanel(private val actions: PlaybackActions, report: (Throwable) -> U
         lyricsPreparation.update(snapshot, settings)
     }
 
+    internal fun awaitLyricsPreparation(timeoutMs: Long = 5_000) {
+        lyricsPreparation.awaitIdle(timeoutMs)
+        WordGeometry.awaitIdle()
+    }
+
     internal fun prepareBuffers(scale: java.awt.geom.AffineTransform) {
         if (gpuDrawing) return
         alphaMask.prepare(this, scale)

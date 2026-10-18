@@ -46,4 +46,10 @@ object WordGeometry {
             Cell(bounds, clusters)
         }
     }
+
+    /** Waits for queued geometry so deterministic render checks observe settled output. */
+    fun awaitIdle() {
+        val queued = synchronized(this) { cache.values.toList() }
+        queued.forEach { runCatching { it.join() } }
+    }
 }

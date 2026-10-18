@@ -4,6 +4,7 @@ package io.github.gaboron.spwisland.ui
 import io.github.gaboron.spwisland.core.*
 import java.awt.Font
 import java.util.concurrent.ArrayBlockingQueue
+import java.util.concurrent.CountDownLatch
 import java.util.concurrent.RejectedExecutionException
 import java.util.concurrent.ThreadPoolExecutor
 import java.util.concurrent.TimeUnit
@@ -29,6 +30,7 @@ internal class IslandLyricsPreparation(private val layouts: IslandLyricsLayout.C
         private set
     private var analyzedLyrics: List<LyricLine>? = null
     private var analyzedTrack: Track? = null
+    private val analyzedLines = HashSet<LyricLine>()
 
     fun update(snapshot: PlaybackSnapshot, nextSettings: IslandSettings) {
         if (closed) return
@@ -49,15 +51,16 @@ internal class IslandLyricsPreparation(private val layouts: IslandLyricsLayout.C
 
     private fun prepare(snapshot: PlaybackSnapshot, settings: IslandSettings, request: Long) {
         if (analyzedTrack != snapshot.track) {
-            longTones.clear(); analyzedLyrics = null; analyzedTrack = snapshot.track
+            longTones.clear(); analyzedLines.clear(); analyzedLyrics = null; analyzedTrack = snapshot.track
         }
         if (settings.karaoke && settings.performance.detailedKaraoke && snapshot.usesWordTiming) {
             snapshot.line?.let { longTones.forWords(it.timedWords) }
             if (analyzedLyrics !== snapshot.lyrics) {
                 for (line in snapshot.lyrics) {
                     if (closed || request != generation) return
-                    longTones.forWords(line.timedWords)
+                    if (analyzedLines.add(line)) longTones.forWords(line.timedWords)
                 }
+                analyzedLines.retainAll(snapshot.lyrics.toSet())
                 analyzedLyrics = snapshot.lyrics
             }
         }
@@ -81,6 +84,18 @@ internal class IslandLyricsPreparation(private val layouts: IslandLyricsLayout.C
                     WordGeometry.ready(block.shapedMain, block.main, block.timedWords)
             }
         }
+    }
+
+    /** Test hook: waits until already queued line preparation has run. */
+    internal fun awaitIdle(timeoutMs: Long = 5_000) {
+        if (closed) return
+        val done = CountDownLatch(1)
+        try {
+            worker.execute { done.countDown() }
+        } catch (_: RejectedExecutionException) {
+            return
+        }
+        done.await(timeoutMs, TimeUnit.MILLISECONDS)
     }
 
     override fun close() {

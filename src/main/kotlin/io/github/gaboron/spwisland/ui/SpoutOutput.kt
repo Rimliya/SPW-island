@@ -88,6 +88,8 @@ internal class SpoutPresentation(report: (Throwable) -> Unit = {}) : AutoCloseab
         return (image.raster.dataBuffer as DataBufferInt).data
     }
 
+    internal fun awaitLyricsPreparation(timeoutMs: Long = 5_000) = panel.awaitLyricsPreparation(timeoutMs)
+
     override fun close() { panel.close(); frame?.flush(); frame = null }
 }
 

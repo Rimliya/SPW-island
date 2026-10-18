@@ -12,7 +12,18 @@ object ActiveLyrics {
         if (started.isEmpty()) return listOfNotNull(snapshot.line)
         val active = started.filter { line -> line.endMs > reachedPosition && line.endMs > line.startMs }
         // During a gap, retain the line that ended last. The latest-started line may have ended earlier.
-        return active.ifEmpty { listOf(started.maxBy { it.endMs }) }
-            .sortedWith(compareBy<LyricLine> { it.startMs }.thenBy { it.endMs })
+        val selected = active.ifEmpty { listOf(started.maxBy { it.endMs }) }
+        return if (ordered(selected)) selected
+        else selected.sortedWith(compareBy<LyricLine> { it.startMs }.thenBy { it.endMs })
+    }
+
+    private fun ordered(lines: List<LyricLine>): Boolean {
+        for (index in 1 until lines.size) {
+            val previous = lines[index - 1]
+            val current = lines[index]
+            if (current.startMs < previous.startMs ||
+                (current.startMs == previous.startMs && current.endMs < previous.endMs)) return false
+        }
+        return true
     }
 }
