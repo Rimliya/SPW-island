@@ -25,6 +25,8 @@ internal class IslandGpuResources : AutoCloseable {
         isAntiAlias = true; mode = PaintMode.STROKE
         strokeCap = PaintStrokeCap.ROUND; strokeJoin = PaintStrokeJoin.ROUND
     }
+    private data class DashKey(val size: Int, val layer: Int)
+    private val dissolveDashes = LinkedHashMap<DashKey, PathEffect>(8)
     private var shader: Shader? = null
     private var fillColor: Int? = null
     private var fillAlpha = Float.NaN
@@ -43,6 +45,18 @@ internal class IslandGpuResources : AutoCloseable {
     }
 
     fun outlineStroke(): NativePaint = outline
+
+    /** Immutable dash effects are shared across frames and only released with the renderer. */
+    fun dissolveDash(size: Float, layer: Int): PathEffect {
+        val key = DashKey(size.toRawBits(), layer)
+        return dissolveDashes[key] ?: PathEffect.makeDash(floatArrayOf(
+            size * (.30f + .12f * layer), size * (.22f + .10f * layer)), size * .37f * layer).also {
+            dissolveDashes[key] = it
+            if (dissolveDashes.size > 16) {
+                dissolveDashes.entries.iterator().run { next().value.close(); remove() }
+            }
+        }
+    }
 
     fun stroke(color: Int, width: Float, alpha: Float = 1f): NativePaint {
         if (strokeColor != color) { stroke.color = color; strokeColor = color; strokeAlpha = Float.NaN }
@@ -126,7 +140,10 @@ internal class IslandGpuResources : AutoCloseable {
     }
 
     override fun close() {
-        fill.close(); stroke.close(); opacity.close(); outline.close(); shader?.close(); shader = null
+        fill.close(); stroke.close(); opacity.close()
+        outline.pathEffect = null; outline.close()
+        dissolveDashes.values.forEach(PathEffect::close); dissolveDashes.clear()
+        shader?.close(); shader = null
         paths.values.forEach(Path::close); paths.clear(); regions.clear()
         covers.values.forEach(Image::close); covers.clear()
     }
