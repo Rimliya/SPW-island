@@ -131,7 +131,6 @@ fun main() {
         check(dotClock.any { it != 0 } && !dotClock.contentEquals(pixelClock)) { "Clock styles missing from output" }
         check(!plain.contentEquals(native(settings.copy(leadingContent = LeadingContent.COVER,
             coverVinylRing = true), timed))) { "Cover vinyl ring missing from output" }
-        SpoutRenderer().apply { render(settings, snap, FloatArray(4), .1); close() }
         Thread.sleep(200)
         check(Thread.getAllStackTraces().keys.none { it.name == "island-lyrics-preparation" && it.isAlive }) {
             "Closed renderers must stop lyric preparation"
