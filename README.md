@@ -6,8 +6,8 @@
 
 > [!NOTE]
 > 这是用于 **OBS Spout2 捕获** 的 fork，fork 自原作者仓库 [GaBoron/SPW-island](https://github.com/GaBoron/SPW-island)。
-> 本地扩展版 `1.0.0-gpu.4`（GPU 实验分支）：基于上游 1.0.0，保留 OBS Spout2 透明输出，桌面隐藏后仍可显示歌词；Spout2 帧改用 Skia 直接写入原生缓冲区；默认歌词字体为内置苹方，可切换内置 MiSans 或系统字体。
-> 本 fork 只构建和分发 Windows 包；安装和设置见 [OBS Spout2 使用说明](docs/obs-spout2.md)。
+> 本 GPU 实验分支发布 `1.0.1-gpu.1`：基于上游 1.0.1，保留 OBS Spout2 透明输出，桌面隐藏后仍可显示歌词；Spout2 直接复用 Skia GPU 帧写入原生缓冲区；默认歌词字体为内置苹方，可切换内置 MiSans 或系统字体。
+> Windows 与 Linux 组件打包在同一个 `.spmod` 中，OBS Spout2 输出仅在 Windows 生效；安装和设置见 [OBS Spout2 使用说明](docs/obs-spout2.md)。
 
 <p align="center">为 Salt Player for Windows 制作的桌面歌词词岛。</p>
 
@@ -41,7 +41,7 @@
 2. 在 SPW 的创意工坊 / 插件管理中导入；
 3. 启用插件并播放一首已经有歌词的歌曲。
 
-本 fork 只构建和分发 Windows x64 版本。不要导入带 `-source` 后缀的源码包。
+Windows x64 和 Linux x64 使用同一个插件包，运行时自动选择平台组件。不要导入带 `-source` 后缀的源码包。
 
 权限说明见 [安装与更新](docs/installation.md)。
 
@@ -52,8 +52,12 @@
 | 平台 | 状态 |
 | --- | --- |
 | Windows 10 / 11 x64 | 支持 |
-| Linux x64 | 本 fork 不再提供 |
+| Linux x64 | 实验性支持 |
 | macOS | 暂无计划 |
+
+Windows 是主要开发环境，提供完整功能；Linux 保留实验性支持，平台差异见兼容性说明。
+
+Linux 实时频谱需要 PipeWire 与 `pw-record` / `pw-dump`；悬停隐藏支持 X11、KDE Wayland 与安装配套扩展的 GNOME Wayland，前台全屏检测仍仅支持 Windows。具体差异见 [兼容性与限制](docs/compatibility.md)。
 
 
 ## 文档
@@ -68,7 +72,7 @@
 
 ## 反馈与贡献
 
-上游项目本身的问题和功能建议请到 [上游 Issue](https://github.com/GaBoron/SPW-island/issues) 反馈。本 fork 只改动了 Windows 上的 OBS Spout2 输出、圆角默认值和若干链接，上游行为请以上游仓库为准。
+上游项目本身的问题和功能建议请到 [上游 Issue](https://github.com/GaBoron/SPW-island/issues) 反馈。本 fork 的改动集中在 Windows 上的 OBS Spout2 输出、圆角默认值和若干链接，上游行为请以上游仓库为准。
 
 较大的功能、UI 行为或平台改动建议先在 Issue 里把目标和范围说清楚，再开始完整实现；小型修复和文档修改可以直接提交 PR。项目的代码边界和贡献习惯写在 [开发指南](docs/development.md) 中。
 

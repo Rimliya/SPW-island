@@ -1,12 +1,13 @@
 # OBS 透明词岛（Windows x64）
 
-本地修改版 `1.0.0-gpu.4`（GPU 实验分支），基于上游 `v1.0.0`（`8ad331d`）。
+本地修改版 `1.0.1-gpu.1`（GPU 实验分支），基于上游 `v1.0.1`（`62f3198`）。
+GPU 分支直接复用 Skia GPU 帧并写入原生缓冲区，省去 Java2D 回读。
 保留原版桌面词岛，并新增独立的 Spout2 视频发送器。
 上一版 `0.10.0-spout.1` 基于 `ef6467ec195536619240efdfcb7870ce7270c909`。
 
 ## 使用
 
-1. 将 Windows 插件包 `.spmod` 导入 SPW，启用插件。
+1. 将 `.spmod` 插件包导入 SPW，启用插件（OBS 输出仅在 Windows 生效）。
 2. **OBS / Spout2 输出** 默认已开启；不需要时在同一设置页关闭即可。
 3. 给需要使用的 OBS 安装 [obs-spout2-plugin 1.12.0](https://github.com/Off-World-Live/obs-spout2-plugin/releases/tag/1.12.0)，然后重启 OBS。
 4. OBS 添加 **Spout2 Capture**，发送器选择 `SPW Lyrics Island`。
@@ -24,7 +25,7 @@
 - 背景播放进度（注水 / 边缘细线）、封面取色、固定宽度、内置苹方默认字体、内置 MiSans 和自定义歌词字体同样作用于 OBS 画面。
 - “重置设置”会同时把 Spout2 设置恢复默认（输出开启、30 FPS）。
 - 可选 30 FPS / 60 FPS，默认 30 FPS；低性能模式约 15 FPS。目标帧率是上限，不保证重负载下达到。
-- 右键 / 托盘菜单新增「Spout2 输出」开关；关闭后离屏渲染、Skia 光栅化与发送线程全部停止，桌面词岛隐藏时频谱采集也会停止，可随时再打开。
+- 右键 / 托盘菜单新增「Spout2 输出」开关；关闭后离屏渲染、光栅化与发送线程全部停止，桌面词岛隐藏时频谱采集也会停止，可随时再打开。
 - 双击词岛仍是播放 / 暂停；单击不会再切换输出。
 - 画布宽度 320–3840、高度 128–2160；歌词长度变化不会改变发送纹理尺寸。
 - 最多 2 倍绘制缩放，超出画布的内容等比适配；屏幕 DPI 不决定输出分辨率。
@@ -35,8 +36,8 @@
 
 ## 构建与验证
 
-要求 JDK 25、Visual Studio 2022 C++ Build Tools、Windows SDK、CMake。
-通过 `JAVA_HOME` 指定 JDK 25 即可，无需更改系统默认 Java。
+要求 JDK 21、Visual Studio 2022 C++ Build Tools、Windows SDK、CMake。
+通过 `JAVA_HOME` 指定 JDK 21 即可，无需更改系统默认 Java。
 
 ```powershell
 .\gradlew.bat plugin --no-daemon
@@ -53,10 +54,9 @@ python src/test/python/native_checks.py
 
 ## 合并说明
 
-- 上游 1.0.0 迁移到 Workshop API dev23，插件包格式改为 `.spmod`，宿主需要 SPW 1.19.0+ / Java 25；本 fork 仍只构建 Windows x64。
 - 上游 0.13 / 0.14 新增实验性液态玻璃背景、重复 GPU 适配器处理、强制逐字歌词与统一玻璃窗口。
-  本 fork 原样接收这些功能；Spout2 使用独立的离屏 `IslandPanel` 记录动画与布局，再由 Skia 在发送线程直接光栅化到原生帧缓冲，与桌面窗口绘制互不影响。
-- 上游 0.11 起歌词布局改为“当前行同步测量 + 后台预热后续行”。`SpoutPresentation` 每帧调用 `prepareLyrics`，
+  本 fork 原样接收这些功能；Spout2 仍使用独立的 Java2D 离屏 `IslandPanel`，与桌面 GPU 绘制互不影响。
+- 上游 0.11 起歌词布局改为“当前行同步测量 + 后台预热后续行”。`SpoutRenderer` 每帧调用 `prepareLyrics`，
   并使用自己的 `IslandPanel` 预热线程；关闭或重配置输出时释放该线程。
 - 上游 0.12 的 `IslandWindow.tick()` 在桌面隐藏时提前返回。Spout2 帧在该返回之前生成，
   帧间隔取桌面调度与 Spout2 目标帧率的较小值，因此全屏 / 暂停 / 关闭显示时仍按设定帧率输出。
@@ -64,10 +64,7 @@ python src/test/python/native_checks.py
 
 ## 实现边界
 
-Swing 事件线程只推进动画、歌词布局与 `IslandPanel.gpuFrame()` 快照，不再逐帧做 Java2D 光栅化。
-发送线程用 Skia `Surface.makeRasterDirect` 直接绘制到 JNA 帧缓冲（预乘 BGRA8，stride = 宽度 × 4），
-再由 `spw-spout.dll` 上传 D3D11 共享纹理，省去一整帧的 CPU 拷贝；这不是 GPU 显存到显存的零拷贝
-（Skiko 使用 D3D12，桥接层只接受 CPU 字节），因此上限仍是“一次光栅化 + 一次纹理上传”。
-待发送帧采用最新帧覆盖策略；原生绘制失败或设置 `-Dspw.spout.renderer=software` 时自动回退到
-`SpoutPresentation` 的 Java2D 兼容光栅路径，输出功能不中断。
-关闭、重配置、退出时均在原生所属线程释放设备与发送器，并释放 Skia 场景与 Surface。
+Java2D 在 Swing 事件线程绘制独立 `IslandPanel`，产生预乘 BGRA8 像素。
+后台线程通过 JNA 调用 `spw-spout.dll` 上传 D3D11 共享纹理；不是全程 GPU 零拷贝。
+最多三个可复用像素数组和一帧待发送数据，忙时替换旧待发送帧。
+关闭、重配置、退出时均在原生所属线程释放设备与发送器。

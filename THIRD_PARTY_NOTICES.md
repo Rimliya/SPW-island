@@ -38,7 +38,7 @@ Windows 发送器静态链接 leadedge/Spout2 `2.007.017` 的 DirectX 11 必需�
 | [MiSans](https://hyperos.mi.com/font)，Xiaomi | 插件界面、右键菜单、字体窗口预览和可选内置歌词字体使用内置 MiSans VF | MiSans 字体许可；附带 [许可文件](licenses/MiSans-License.pdf) |
 | 内置苹方风格字体，fork 维护者提供 | Windows 默认歌词字体；字体文件由用户提供并随包分发 | 来源与使用说明见 [PingFang-NOTICE.txt](licenses/PingFang-NOTICE.txt) |
 | [Compose Multiplatform](https://github.com/JetBrains/compose-multiplatform)，JetBrains / Android Open Source Project | Windows 字体窗口使用 Compose Desktop 1.12.1；随 Windows 包提供运行库 | Apache-2.0；保留 JAR 内声明与 [完整文本](licenses/Apache-2.0.txt) |
-| [Skiko](https://github.com/JetBrains/skiko/tree/v0.150.1)，JetBrains | Windows 词岛与字体窗口使用 0.150.1；随包只提供 Windows x64 原生库 | Apache-2.0；[完整文本](licenses/Apache-2.0.txt) 与 [Skiko NOTICE](licenses/Skiko-NOTICE.txt) |
+| [Skiko](https://github.com/JetBrains/skiko/tree/v0.150.1)，JetBrains | 两平台词岛使用 0.150.1，Windows 字体窗口共用；随包提供 Windows x64 与 Linux x64 原生库 | Apache-2.0；[完整文本](licenses/Apache-2.0.txt) 与 [Skiko NOTICE](licenses/Skiko-NOTICE.txt) |
 | [Skia](https://skia.org/)，Google 与 contributors | Skiko 原生库中的绘制引擎 | BSD-3-Clause；附带 [许可全文](licenses/Skia-LICENSE.txt) |
 | [Kotlin / kotlinx.coroutines](https://github.com/JetBrains/kotlin)，JetBrains | 编译工具、标准库与绘制调度运行库；随包提供 | Apache-2.0；[完整文本](licenses/Apache-2.0.txt) |
 | [PF4J](https://github.com/pf4j/pf4j)，Decebal Suiu | 编译使用 3.12.0，由宿主提供 | Apache-2.0 |

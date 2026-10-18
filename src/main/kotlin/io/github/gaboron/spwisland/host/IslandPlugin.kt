@@ -4,8 +4,8 @@ package io.github.gaboron.spwisland.host
 import com.xuncorp.spw.workshop.api.PluginContext
 import com.xuncorp.spw.workshop.api.SpwPlugin
 
-class IslandPlugin(context: PluginContext) : SpwPlugin(context) {
-    override fun start() {
+open class IslandPlugin(context: PluginContext) : SpwPlugin(context) {
+    open override fun start() {
         if (runtime != null) return
         val created = IslandRuntime()
         runtime = created
@@ -19,14 +19,14 @@ class IslandPlugin(context: PluginContext) : SpwPlugin(context) {
             throw error
         }
     }
-    override fun stop() {
+    open override fun stop() {
         val old = runtime ?: return
         playback.detach(old)
         runtime = null
         old.close()
     }
-    override fun update() = stop()
-    override fun delete() = stop()
+    open override fun update() = stop()
+    open override fun delete() = stop()
 
     companion object {
         // The single bridge required by PF4J's independently constructed extension instance.
