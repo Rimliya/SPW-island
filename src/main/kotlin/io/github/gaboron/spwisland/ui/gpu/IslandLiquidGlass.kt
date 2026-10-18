@@ -31,6 +31,11 @@ internal class IslandLiquidGlass : AutoCloseable {
         if (failure != null) return false
         val pixels = sample.pixels
         val bounds = path.bounds
+        if (!bounds.left.isFinite() || !bounds.top.isFinite() || !bounds.right.isFinite() ||
+            !bounds.bottom.isFinite() || bounds.width <= 0f || bounds.height <= 0f ||
+            pixels.width <= 0 || pixels.height <= 0 ||
+            !sample.scaleX.isFinite() || !sample.scaleY.isFinite() ||
+            sample.scaleX <= 0f || sample.scaleY <= 0f) return false
         if (sample.islandX + bounds.left * sample.scaleX < pixels.x - 1 ||
             sample.islandY + bounds.top * sample.scaleY < pixels.y - 1 ||
             sample.islandX + bounds.right * sample.scaleX > pixels.x + pixels.width + 1 ||
