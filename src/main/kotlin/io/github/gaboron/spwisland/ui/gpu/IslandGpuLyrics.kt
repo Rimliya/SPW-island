@@ -157,16 +157,13 @@ internal class IslandGpuLyrics(private val resources: IslandGpuResources) {
         val paint = resources.outlineStroke()
         try {
             for (layer in DISSOLVE_LAYERS.indices.reversed()) {
-                paint.pathEffect?.close()
-                paint.pathEffect = PathEffect.makeDash(floatArrayOf(
-                    size * (.30f + .12f * layer), size * (.22f + .10f * layer)), size * .37f * layer)
+                paint.pathEffect = resources.dissolveDash(size, layer)
                 paint.strokeWidth = edge * DISSOLVE_LAYERS[layer]
                 paint.color = 0xff000000.toInt()
                 paint.setAlphaf(DISSOLVE_ALPHAS[layer] / 255f * alpha)
                 canvas.drawPath(path, paint)
             }
         } finally {
-            paint.pathEffect?.close()
             paint.pathEffect = null
         }
     }

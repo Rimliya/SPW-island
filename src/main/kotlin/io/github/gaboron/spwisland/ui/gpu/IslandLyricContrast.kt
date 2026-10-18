@@ -37,6 +37,11 @@ internal class IslandLyricContrast : AutoCloseable {
         val base = inverseBase ?: return
         val current = context ?: return
         if (unavailable) return
+        if (!left.isFinite() || !right.isFinite() || !ascent.isFinite() || !descent.isFinite() ||
+            right <= left || descent <= ascent) {
+            lineShader = null
+            return
+        }
         try {
             val sampled = samples ?: checkNotNull(Surface.makeRenderTarget(current, true,
                 ImageInfo(5, 3, ColorType.RGBA_8888, ColorAlphaType.PREMUL))).also {
@@ -53,6 +58,10 @@ internal class IslandLyricContrast : AutoCloseable {
                 RuntimeShaderBuilder(compiled).also { builder = it }
             }
             val transform = base.makeConcat(canvas.localToDeviceAsMatrix33).mat
+            if (transform.any { !it.isFinite() }) {
+                lineShader = null
+                return
+            }
             sampler.uniform("backgroundX", transform[0], transform[1], transform[2])
             sampler.uniform("backgroundY", transform[3], transform[4], transform[5])
             sampler.uniform("backgroundW", transform[6], transform[7], transform[8])
