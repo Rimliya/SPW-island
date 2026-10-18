@@ -33,11 +33,19 @@ internal class IslandGlassContour : AutoCloseable {
         val nextKey = listOf(geometry, scaleX, scaleY)
         if (key == nextKey) return
         val bounds = path.bounds
+        require(bounds.left.isFinite() && bounds.top.isFinite() && bounds.right.isFinite() &&
+            bounds.bottom.isFinite() && bounds.width > 0f && bounds.height > 0f &&
+            scaleX.isFinite() && scaleY.isFinite() && scaleX > 0f && scaleY > 0f) {
+            "液态玻璃轮廓无效"
+        }
         val margin = IslandGlassShaders.DISTANCE_RANGE + 2f
         val x = floor((bounds.left - margin) * scaleX)
         val y = floor((bounds.top - margin) * scaleY)
         val width = (ceil((bounds.right + margin) * scaleX) - x).coerceAtLeast(1f)
         val height = (ceil((bounds.bottom + margin) * scaleY) - y).coerceAtLeast(1f)
+        require(width.isFinite() && height.isFinite() && width <= 16384f && height <= 16384f) {
+            "液态玻璃轮廓尺寸超出上限"
+        }
         val program = builder ?: run {
             val compiled = RuntimeEffect.makeForShader(IslandGlassShaders.SEGMENT_DISTANCE)
             effect = compiled
