@@ -68,7 +68,7 @@ class PlaybackTimeline(private val nanoTime: () -> Long = System::nanoTime) : Pl
             if (updated !== callbackLyrics) {
                 callbackLyrics = updated
                 mergedLyrics = if (documentLyrics.lines.isEmpty()) updated
-                    else documentLyrics.withUpdates(updated.lines)
+                    else documentLyrics.withUpdates(listOf(value))
             }
             if (awaitingPausedSeekLine) {
                 pausedPresentation = PausedPresentation(track, value,

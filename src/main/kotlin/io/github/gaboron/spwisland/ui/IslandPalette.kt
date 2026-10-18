@@ -17,8 +17,17 @@ data class IslandPalette(val lyric: Color, val background: Color, val spectrum: 
         private const val MAX_LYRIC_SATURATION = .42f
         private const val MIN_COVER_CONTRAST = 10.0
         private const val MIN_TRANSPARENT_CONTRAST = 4.5
+        private data class CacheKey(val coverRgb: Int?, val backgroundCoverColor: Boolean,
+                                    val lyricCoverColor: Boolean, val spectrumCoverColor: Boolean,
+                                    val opacity: Int)
+        private var cachedKey: CacheKey? = null
+        private var cachedPalette: IslandPalette? = null
 
+        @Synchronized
         fun from(settings: IslandSettings, coverRgb: Int?): IslandPalette {
+            val key = CacheKey(coverRgb, settings.backgroundCoverColor, settings.lyricCoverColor,
+                settings.spectrumCoverColor, settings.opacity)
+            cachedPalette?.let { if (cachedKey == key) return it }
             val cover = coverRgb?.let { Color(it) }
             val hsb = cover?.let { Color.RGBtoHSB(it.red, it.green, it.blue, null) }
             // The sampled hue is only an accent: keep the background dark and the lyric light.
@@ -35,10 +44,13 @@ data class IslandPalette(val lyric: Color, val background: Color, val spectrum: 
                 minOf(contrast(lyric, visibleBackground), contrast(DIM_LYRIC, visibleBackground),
                     contrast(SUB_LYRIC, visibleBackground)) < MIN_TRANSPARENT_CONTRAST
             }
-            return IslandPalette(
+            val palette = IslandPalette(
                 lyric, background,
                 if (settings.spectrumCoverColor) sampledBright ?: Color.WHITE else Color.WHITE,
                 lyricOutline)
+            cachedKey = key
+            cachedPalette = palette
+            return palette
         }
 
         private fun brightCoverColor(hue: Float, saturation: Float, background: Color): Color {
