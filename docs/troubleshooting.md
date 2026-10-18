@@ -189,10 +189,33 @@
 
 “整个 SPW 都卡”和“只有词岛动画掉帧”不是同一类问题，尽量分清楚。
 
+## Linux
+
+Linux 目前仍是实验性支持，完整差异见 [兼容性与限制](compatibility.md#linux-实验性支持)。
+
+### 词岛上右键没有菜单
+
+当前 Linux 快捷设置入口在系统托盘，词岛区域右键暂不提供菜单。也可以直接用 SPW 原生插件设置页。
+
+### 看不到托盘图标
+
+插件优先使用 AppIndicator / Ayatana AppIndicator，不可用时再尝试 GTK StatusIcon。部分桌面环境默认没有可见托盘区域，或者需要额外启用 AppIndicator 支持。
+
+如果日志提示无法加载 `libgtk-3.so.0`，插件会尝试系统库路径和 GTK 2。两者均失败时，日志会保留具体的共享库加载错误；请检查 SPW 所在运行环境中的 GTK，而不只是终端里主系统的安装情况。若通过 Steam Linux Runtime 或其他隔离环境启动，反馈时请注明启动方式。
+
+托盘不可用时，词岛本身仍可能正常工作，设置可以继续从 SPW 里改。
+
+### 拖动松手后短暂闪回原位置
+
+先检查是否安装了最新版本，再连续拖动词岛到不同位置，观察松手后是否保持在目标位置。若位置仍会跳回，请在 Issue 中附上录屏、桌面版本、缩放比例和是否启用鼠标穿透。
+
+### 平台专属设置没有效果
+
+Windows 和 Linux 使用同一个插件包与设置页，平台专属项会在名称中标明。Windows 使用“歌词字体（Windows）”打开字体窗口，Linux 使用字体名称和字重字段。前台全屏隐藏和液态玻璃仅在 Windows 生效；Linux 功能和环境要求见 [兼容性与限制](compatibility.md#linux-实验性支持)。
 
 ## 提交 Issue
 
-上面的办法都没解决，可以到[上游仓库的 Issues](https://github.com/GaBoron/SPW-island/issues) 反馈。本 fork 只改动了 Windows 上的 OBS Spout2 输出、圆角默认值和若干链接。
+上面的办法都没解决，可以到[上游仓库的 Issues](https://github.com/GaBoron/SPW-island/issues) 反馈。本 fork 的改动集中在 Windows 上的 OBS Spout2 输出、圆角默认值和若干链接，Linux 支持跟随上游。
 
 至少写清楚平台、系统版本、SPW 版本、插件版本、复现步骤，以及问题是每次都出现还是偶发。截图或录屏尽量同时带上 SPW 和词岛状态。
 

@@ -1,13 +1,15 @@
-name: build
+name: build-and-release
 
 on:
   workflow_dispatch:
   push:
     branches:
       - main
+    tags:
+      - "v*"
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   windows:
@@ -25,16 +27,42 @@ jobs:
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
 
+      - name: Verify release tag
+        if: startsWith(github.ref, 'refs/tags/v')
+        shell: pwsh
+        run: |
+          $line = Select-String -Path gradle.properties -Pattern '^version=(.+)$' | Select-Object -First 1
+          if (-not $line) { throw 'version is missing from gradle.properties' }
+          $version = $line.Matches[0].Groups[1].Value.Trim()
+          if ("v$version" -ne "${{ github.ref_name }}") {
+            throw "Tag ${{ github.ref_name }} does not match project version v$version"
+          }
+
       - name: Build plugin package and source archive
-        run: ./gradlew --no-daemon --stacktrace plugin
+        shell: pwsh
+        run: |
+          ./gradlew --no-daemon --stacktrace test plugin
+          if ($LASTEXITCODE -ne 0) { throw "Gradle build failed" }
+          ./scripts/verify-spmod.ps1
+          if ($LASTEXITCODE -ne 0) { throw "Package verification failed" }
 
       - name: List outputs
         run: Get-ChildItem build/distributions | Format-Table Name, Length
 
       - uses: actions/upload-artifact@v4
         with:
-          name: spw-island-spmod
+          name: spw-island-${{ github.sha }}
           path: |
             build/distributions/*.spmod
             build/distributions/*-source.zip
           if-no-files-found: error
+
+      - name: Publish GitHub Release
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          generate_release_notes: true
+          fail_on_unmatched_files: true
+          files: |
+            build/distributions/*.spmod
+            build/distributions/*-source.zip

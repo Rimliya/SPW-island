@@ -4,7 +4,7 @@
 
 ## 下载
 
-从 [Releases](https://github.com/Rimliya/SPW-island/releases/latest) 下载 `spw-island-<版本>.spmod`。本 fork 只提供 Windows x64 构建，需要支持 Workshop API dev23 的 SPW 1.19.0 或更高版本。
+从 [Releases](https://github.com/Rimliya/SPW-island/releases/latest) 下载 `spw-island-<版本>.spmod`。Windows x64 和 Linux x64 使用同一个插件包，需要支持 Workshop API dev23 的 SPW 1.19.0 或更高版本。
 不要导入带 `-source` 后缀的源码包。
 
 ## Windows
@@ -21,6 +21,22 @@
 安装时可授予“曲库读取”和“快捷键”权限。曲库读取用于恢复当前歌曲、查询时长和内嵌封面；快捷键用于注册显示 / 隐藏词岛动作。未授权时，歌词和播放控制仍可使用，曲目信息会在后续切歌回调到达后显示，封面与时长尝试从本地文件读取。更改权限后可停用并重新启用插件。
 
 实时频谱还有额外要求：Windows build 20348 或更高、可用的 .NET Framework 4.x，以及共享模式音频输出。条件不满足时歌词和其他功能仍可继续使用，详见 [兼容性与限制](compatibility.md#实时频谱与音频输出)。
+
+## Linux
+
+Linux x64 目前仍是实验性支持，需要：
+
+- 支持 Workshop API dev23、Java 25 和 Swing 插件的 SPW Linux 宿主；
+- `/usr/bin/python3`；
+- X11 或 XWayland。
+
+界面使用 SPW 自带的 JVM，不需要单独安装 Java；Python helper 只使用标准库，不需要 PyGObject。
+
+系统托盘优先使用 GTK 3，不可加载时尝试 GTK 2。GTK 必须在 SPW 的运行环境中可用；托盘不可用时仍可从 SPW 插件设置页管理词岛。
+
+可选的实时频谱还需要 PipeWire，以及 `pw-record` / `pw-dump`（发行版通常放在 `pipewire-bin` 或 `pipewire` 包中）。悬停隐藏支持 X11 与 KDE Wayland。GNOME Wayland 45–50 需点击插件配置的“安装 GNOME 悬停隐藏支持”，首次安装或更新后保存工作并重新登录。
+
+安装方式与 Windows 相同：导入 `.spmod` 并启用“灵动词岛 for SPW”。Linux 的快捷设置入口在系统托盘；设置页中标为 Windows 的功能仅在 Windows 生效，Linux 字体与 GNOME 支持使用对应的 Linux 设置项。具体差异见 [兼容性与限制](compatibility.md#linux-实验性支持)。
 
 ## 更新
 

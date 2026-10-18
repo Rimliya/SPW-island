@@ -33,6 +33,7 @@ dependencies {
     implementation("org.jetbrains.compose.desktop:desktop-jvm:1.12.1")
     implementation("org.jetbrains.skiko:skiko-awt:$skikoVersion")
     runtimeOnly("org.jetbrains.skiko:skiko-awt-runtime-windows-x64:$skikoVersion")
+    runtimeOnly("org.jetbrains.skiko:skiko-awt-runtime-linux-x64:$skikoVersion")
     metadataSources("net.jthink:jaudiotagger:3.0.1:sources")
     testImplementation(kotlin("stdlib"))
 }
@@ -55,11 +56,17 @@ tasks.register<JavaExec>("spoutLifecycle") {
     classpath = sourceSets.test.get().runtimeClasspath
     mainClass.set("io.github.gaboron.spwisland.ui.SpoutLifecycle")
 }
+val gnomePointer = tasks.register<Zip>("gnomePointer") {
+    archiveFileName.set("spw-island-pointer@gaboron.github.io.shell-extension.zip")
+    destinationDirectory.set(layout.buildDirectory.dir("distributions"))
+    from("src/linux/resources/native/gnome-pointer")
+    from("LICENSE")
+}
 tasks.processResources {
-    doFirst { check(isWindows) { "Build the Windows-only plugin on Windows with the native toolchains installed" } }
+    doFirst { check(isWindows) { "Build the universal plugin on Windows with the native toolchains installed" } }
     from("native/shared-fonts/MiSansVF.ttf") { into("fonts") }
     from("native/shared-fonts/PingFang.ttc") { into("fonts") }
-    dependsOn("buildSpectrum", "buildWindowsTray", "buildWindowsGlass", "buildSpout")
+    dependsOn("buildSpectrum", "buildWindowsTray", "buildWindowsGlass", "buildSpout", gnomePointer)
     from(layout.buildDirectory.file("native/spw-spectrum.exe")) { into("native") }
     from(layout.buildDirectory.file("native/spw-island-tray.exe")) { into("native") }
     from(layout.buildDirectory.file("native/spw-spout.dll")) { into("native") }
@@ -94,6 +101,7 @@ tasks.register<Zip>("sourceArchive") {
     }
     from("gradle") { into("gradle") }
     from("tools/build-glass.ps1") { into("tools") }
+    from("scripts/verify-spmod.ps1") { into("scripts") }
     from("licenses") { into("licenses") }
     from("docs") { into("docs") }
     from("build.gradle.kts", "settings.gradle.kts", "gradle.properties", "gradlew", "gradlew.bat",

@@ -5,10 +5,9 @@
 JNA 与原生所属线程；`native/spout` 构建 D3D11 发送桥。详见 [OBS Spout2](obs-spout2.md)。
 
 > [!IMPORTANT]
-> 本 fork 只构建、分发和验证 **Windows x64**。上游的 Linux 代码路径（`LinuxIslandProcess`、
-> `LinuxIslandMain`、X11 / KDE / GNOME 指针桥、PipeWire 频谱、GTK 托盘等）仍保留在源码中，
-> 便于日后对照上游，但本 fork 不再构建、不再提供 Linux 包，`src/linux/resources` 已删除。
-> 本文中所有标注 Linux 的章节只描述上游保留代码，不代表本 fork 的支持范围。
+> 本 fork 与上游一致，同一个 `.spmod` 同时包含 **Windows x64** 和 **Linux x64** 组件，运行时自动选择平台。
+> Linux 为实验性支持；`LinuxIslandProcess`、`LinuxIslandMain`、X11 / KDE / GNOME 指针桥、PipeWire 频谱、
+> GTK 托盘等代码与 `src/linux/resources` 资源都会参与构建和打包。OBS Spout2 输出仅在 Windows 生效。
 
 本文面向希望了解、修改或贡献灵动词岛 for SPW 的开发者。
 
@@ -671,7 +670,7 @@ IslandLeadingContent / IslandTrailingContent
 
 ### 4.10 Linux Python bridge
 
-`src/linux/resources/native/island-linux.py` 是上游的 Linux 桌面辅助桥（本 fork 已删除该目录，此节仅作对照）。
+`src/linux/resources/native/island-linux.py` 是 Linux 桌面辅助桥，随插件包一起分发。
 
 它只使用 Python 标准库，通过 `ctypes` 调用系统共享库。
 
@@ -685,7 +684,7 @@ IslandLeadingContent / IslandTrailingContent
 
 #### `tray`
 
-加载 GTK 3，并优先使用 AppIndicator 创建持久托盘；不可用时回退到 GTK StatusIcon。
+优先加载 GTK 3；库名查找失败时尝试常见 Linux x64 系统库目录，GTK 3 不可加载时尝试 GTK 2。优先使用匹配 GTK 版本的 AppIndicator 创建持久托盘，不可用时回退到 GTK StatusIcon。查找限于进程可见的文件系统，不从 `/run/host` 混入其他运行环境的库。
 
 菜单数据来自 `GtkTray`。
 
@@ -699,7 +698,7 @@ GTK 与 Swing/AWT 不在同一个 JVM 中初始化，以减少线程和桌面工
 
 KWin 桥接通过会话 D-Bus 加载临时脚本，每 50 ms 更新指针。关闭功能、退出或连接失效时卸载脚本，桥接进程消失时脚本也会自行卸载；连接断开后尝试重连。
 
-GNOME Wayland 使用 `SPW Island Pointer` 扩展，支持 GNOME 45–50。扩展按需调用 `global.get_pointer()`，通过只读 D-Bus 方法返回坐标。`install-gnome-pointer.py` 安装扩展，备份已有版本并保留其他扩展设置；首次安装或更新后需重新登录。扩展源码位于 `src/linux/resources/native/gnome-pointer/`，上游由 `gnomePointer` 任务生成 ZIP 并装入 Linux 插件资源；本 fork 已删除该目录和对应任务。
+GNOME Wayland 使用 `SPW Island Pointer` 扩展，支持 GNOME 45–50。扩展按需调用 `global.get_pointer()`，通过只读 D-Bus 方法返回坐标。`install-gnome-pointer.py` 安装扩展，备份已有版本并保留其他扩展设置；首次安装或更新后需重新登录。扩展源码位于 `src/linux/resources/native/gnome-pointer/`，由 `gnomePointer` 任务生成 ZIP 并装入 Linux 插件资源。
 
 #### PipeWire 频谱
 
@@ -713,8 +712,7 @@ GNOME Wayland 使用 `SPW Island Pointer` 扩展，支持 GNOME 45–50。扩展
 
 | 路径 | 职责 |
 | --- | --- |
-| `src/main/resources/preference_config.json` | Windows/SPW 插件配置页声明 |
-| `src/linux/resources/preference_config.json` | 上游 Linux 配置页声明（本 fork 已删除） |
+| `src/main/resources/preference_config.json` | Windows / Linux / SPW 插件配置页声明 |
 | `src/main/resources/META-INF/extensions.idx` | 显式注册 `IslandPlaybackExtension` |
 | `src/main/resources/project.properties` | 构建时写入项目源代码地址 |
 | `native/shared-fonts/MiSansVF.ttf` | 插件界面、菜单和字体窗口使用的 MiSans，也可作为可选歌词字体 |
@@ -939,7 +937,7 @@ Linux 捕获/算法：
 
 ```text
 LinuxProcessSpectrum
-src/linux/resources/native/island-spectrum.py（本 fork 已删除）
+src/linux/resources/native/island-spectrum.py
 IslandWire / RemoteSpectrum
 ```
 
@@ -988,7 +986,7 @@ IslandMenuCommands
 Linux 设置同步还要确认：
 
 ```text
-src/linux/resources/preference_config.json（本 fork 已删除）
+src/main/resources/preference_config.json（Linux 专属项）
 RemoteSettingsStore
 ```
 
@@ -1425,8 +1423,8 @@ Windows 构建还需要系统 .NET Framework 4.x 自带的 C# 编译器，用于
 gradlew plugin
 ```
 
-`plugin` 生成 `.spmod`。上游的 Linux helper、`gnomePointer` 任务和 `src/linux/resources`
-资源目录已在本 fork 中移除，只构建 Windows x64。
+`plugin` 生成 `.spmod`。Windows 原生 helper、`gnomePointer` 任务和 `src/linux/resources`
+中的 Linux 资源会一起打入同一个包。
 
 输出位于：
 

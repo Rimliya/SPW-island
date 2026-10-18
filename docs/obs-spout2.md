@@ -1,12 +1,12 @@
 # OBS 透明词岛（Windows x64）
 
-本地修改版 `1.0.0-spout.4`，基于上游 `v1.0.0`（`8ad331d`）。
+本地修改版 `1.0.1-spout.1`，基于上游 `v1.0.1`（`62f3198`）。
 保留原版桌面词岛，并新增独立的 Spout2 视频发送器。
 上一版 `0.10.0-spout.1` 基于 `ef6467ec195536619240efdfcb7870ce7270c909`。
 
 ## 使用
 
-1. 将 Windows 插件 ZIP 导入 SPW，启用插件。
+1. 将 `.spmod` 插件包导入 SPW，启用插件（OBS 输出仅在 Windows 生效）。
 2. **OBS / Spout2 输出** 默认已开启；不需要时在同一设置页关闭即可。
 3. 给需要使用的 OBS 安装 [obs-spout2-plugin 1.12.0](https://github.com/Off-World-Live/obs-spout2-plugin/releases/tag/1.12.0)，然后重启 OBS。
 4. OBS 添加 **Spout2 Capture**，发送器选择 `SPW Lyrics Island`。

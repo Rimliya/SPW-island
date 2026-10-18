@@ -10,8 +10,8 @@ Windows x64 和 Linux x64 共用一个 `.spmod`，运行时自动选择平台组
 
 | 平台 | 状态 | 说明 |
 | --- | --- | --- |
-| Windows 10 / 11 x64 | 支持 | 本 fork 唯一支持并构建的平台；音频环境要求见下文 |
-| Linux x64 | 本 fork 不再提供 | 上游曾有实验性支持，本 fork 已移除 |
+| Windows 10 / 11 x64 | 主要支持平台 | 原生窗口功能较完整；音频环境要求见下文 |
+| Linux x64 | 实验性支持 | 需要 `/usr/bin/python3` 和 X11 / XWayland；托盘使用 GTK 3 或 GTK 2 |
 | macOS | 暂无计划 | 当前没有构建和平台适配 |
 | Android / iOS / HarmonyOS | 不支持 | Salt Player 当前没有对应插件运行环境 |
 
@@ -100,5 +100,30 @@ Windows x64 和 Linux x64 共用一个 `.spmod`，运行时自动选择平台组
 “全屏时隐藏”依赖前台窗口判断。动态壁纸、桌面增强软件或其他铺满屏幕的窗口偶尔也会被识别为全屏。
 
 字体缺字时先使用当前歌词字体；默认内置苹方缺少字形时回退到内置 MiSans，再回退到系统字体；系统仍无对应字形时才会显示缺字框。
+
+## Linux 实验性支持
+
+Linux 版本复用大部分歌词和 Swing UI，但词岛窗口运行在独立界面进程里。
+
+需要：
+
+- Linux x64；
+- 支持 Java / Swing 插件的 SPW Linux 宿主；
+- `/usr/bin/python3`；
+- X11 或 XWayland。
+
+界面直接使用 SPW 自带 JVM，不需要另外装 Java；Python helper 只用标准库。
+
+词岛使用 GPU 绘制，Windows 使用 Direct3D，Linux 需要可用的 OpenGL 驱动及 `libGL`、`libX11`、`fontconfig`。无法初始化 GPU 时自动使用兼容绘制，可在“关于与状态”的“词岛绘制”中确认。
+
+快捷设置通过 GTK 托盘提供，优先加载 GTK 3，不可加载时尝试 GTK 2；AppIndicator / Ayatana AppIndicator 使用匹配的 GTK 版本，不可用时尝试 GTK StatusIcon。GTK 库需在 SPW 的运行环境内可用，主系统中安装了 GTK 不一定代表隔离的运行环境也能加载。不同桌面环境的托盘支持差异很大；如果看不到托盘，仍然可以从 SPW 原生插件设置页管理词岛。
+
+Linux 窗口仍使用 X11 / XWayland。普通悬停展开通过窗口进入/离开事件判断，不依赖跨原生 Wayland 窗口可能失效的全局坐标。鼠标穿透通过空输入区域实现，托盘和插件设置中的“找回词岛”可解除。
+
+穿透时的悬停隐藏需要可靠的全局指针：X11 直接支持；KDE Wayland 会在启用时临时加载 KWin 脚本，关闭功能或退出时卸载，不修改永久桌面设置。指针过期或桥接断开时自动恢复显示并尝试重连。GNOME Wayland 45–50 通过只读配套扩展提供指针，需从插件设置安装，首次安装或更新后重新登录。其他 Wayland 桌面目前不支持悬停隐藏，词岛保持显示，鼠标穿透仍可使用。
+
+Linux 目前没有前台全屏检测、Windows 式额外置顶强化和词岛区域右键菜单。统一设置页标明平台专属项；标为 Windows 的功能在 Linux 中不生效。
+
+Linux 支持仍处于实验阶段，托盘、窗口定位及混合缩放表现可能因桌面环境而异。
 
 如果上表中标记为支持的功能实际没有正常工作，请看 [故障排查](troubleshooting.md)。更底层的实现和平台架构放在 [开发指南](development.md)。
