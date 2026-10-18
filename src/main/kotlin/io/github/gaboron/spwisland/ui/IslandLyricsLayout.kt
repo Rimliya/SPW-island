@@ -40,9 +40,13 @@ class IslandLyricsLayout private constructor(snapshot: PlaybackSnapshot, private
         )
         val needed = ceil(blocks.maxOf { maxOf(it.shapedMain.width + motionPad, it.shapedSub?.width ?: 0f) } +
             horizontal.textInset * 2).toInt()
-        val height = preferredHeight + if (expanded) IslandTextBlock.EXPANDED_HEIGHT else 0
+        val baseHeight = when (settings.heightMode) {
+            IslandHeightMode.FIXED -> settings.fixedHeight
+            IslandHeightMode.AUTO -> preferredHeight
+        }
+        val height = baseHeight + if (expanded) IslandTextBlock.EXPANDED_HEIGHT else 0
         val frameInset = ceil(IslandGeometry.frameInset(
-            height.toDouble(), settings.notch, settings.cornerRoundness
+            height.toDouble(), settings.shape, settings.cornerRoundness
         )).toInt()
         val limit = (maxWidth - frameInset * 2).coerceAtLeast(1)
         val natural = maxOf(needed, IslandContentLayout.minimumWidth(expanded))

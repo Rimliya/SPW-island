@@ -67,7 +67,7 @@ internal class IslandGpuRenderer(private val owner: Window, private val surface:
                             canvas.translate(surface.island.x.toFloat(), surface.island.y.toFloat())
                             val frame = surface.island.gpuFrame()
                             painter.paint(canvas, frame, IslandHoverGeometry.frame(frame.width, frame.height,
-                                frame.settings.notch, frame.settings.cornerRoundness, surface.hoverPose), scale.scaleY,
+                                frame.settings.shape, frame.settings.cornerRoundness, frame.settings.squircle, surface.hoverPose), scale.scaleY,
                                 backdrop?.sample(surface.island.x, surface.island.y,
                                     scale.scaleX.toFloat(), scale.scaleY.toFloat()), gpu?.context)
                         }
@@ -101,8 +101,8 @@ internal class IslandGpuRenderer(private val owner: Window, private val surface:
             if (owner.isDisplayable && current.isDisplayable) {
                 val settings = surface.island.settings
                 val scale = owner.graphicsConfiguration.defaultTransform
-                nativeInput?.update(listOf(surface.island.bounds, settings.notch,
-                    settings.cornerRoundness, scale.scaleX, scale.scaleY),
+                nativeInput?.update(listOf(surface.island.bounds, settings.shape,
+                    settings.cornerRoundness, settings.squircle, scale.scaleX, scale.scaleY),
                     settings.clickThrough || settings.autoHideOnHover, surface::inputRegion)
                 if (Platform.isWindows() && settings.backgroundStyle == IslandBackgroundStyle.LIQUID_GLASS &&
                     !settings.lowPerformance && owner.isVisible && scene?.glassFailure == null) {
@@ -116,7 +116,7 @@ internal class IslandGpuRenderer(private val owner: Window, private val surface:
                     // Capture the visible animated contour, not the much larger reserved backing canvas.
                     // 32 physical pixel tiles keep small layout changes from constantly resizing readback buffers.
                     val bounds = IslandHoverGeometry.frame(surface.island.width, surface.island.height,
-                        settings.notch, settings.cornerRoundness, surface.hoverPose).shape.bounds2D
+                        settings.shape, settings.cornerRoundness, settings.squircle, surface.hoverPose).shape.bounds2D
                     val padding = IslandGlassShaders.CAPTURE_PADDING
                     val left = (kotlin.math.floor((surface.island.x + bounds.minX - padding) * scale.scaleX / 32) * 32).toInt()
                     val top = (kotlin.math.floor((surface.island.y + bounds.minY - padding) * scale.scaleY / 32) * 32).toInt()

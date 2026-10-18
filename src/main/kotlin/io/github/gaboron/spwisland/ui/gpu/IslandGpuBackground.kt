@@ -59,7 +59,7 @@ internal class IslandGpuBackground(private val resources: IslandGpuResources) : 
                     canvas.drawPath(path, resources.fill(color, blend = BlendMode.SRC))
                 }
                 BackgroundProgressMode.TOP_LINE -> {
-                    val inset = IslandGeometry.progressEdgeInset(frame.width, frame.height, frame.settings.notch, frame.settings.cornerRoundness)
+                    val inset = IslandGeometry.progressEdgeInset(frame.width, frame.height, frame.settings.shape, frame.settings.cornerRoundness)
                     val start = inset.coerceAtLeast(2.0).toFloat()
                     val end = (frame.width - inset).coerceAtLeast(start.toDouble()).toFloat()
                     val y = if (frame.settings.notch) shape.shape.bounds2D.maxY - .75 else shape.shape.bounds2D.minY + .75

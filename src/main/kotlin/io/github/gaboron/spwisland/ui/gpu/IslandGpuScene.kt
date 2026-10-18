@@ -45,7 +45,7 @@ internal class IslandGpuScene : AutoCloseable {
             HorizontalAnchor.CENTER -> frame.width / 2f - outerWidth / 2
             HorizontalAnchor.RIGHT -> frame.width - outerWidth
         }
-        val inset = IslandGeometry.frameInset(frame.animatedHeight, frame.settings.notch, frame.settings.cornerRoundness).toFloat()
+        val inset = IslandGeometry.frameInset(frame.animatedHeight, frame.settings.shape, frame.settings.cornerRoundness).toFloat()
         val contentWidth = (outerWidth - inset * 2).coerceAtLeast(1f)
         val contentX = outerX + inset
         val contentY = when (frame.anchor.vertical) {
@@ -56,8 +56,8 @@ internal class IslandGpuScene : AutoCloseable {
         val lyricHeight = (contentHeight - frame.expansion * IslandTextBlock.EXPANDED_HEIGHT).toFloat().coerceAtLeast(1f)
         val layout = IslandContentLayout.from(frame.lyrics.blocks.first().mainLineHeight, frame.settings.sideContent.showsSides)
         canvas.scoped {
-            canvas.clipPath(resources.path(IslandGeometry.silhouette(frame.width, frame.height, frame.settings.notch,
-                frame.settings.cornerRoundness)), ClipMode.INTERSECT, true)
+            canvas.clipPath(resources.path(IslandGeometry.silhouette(frame.width, frame.height, frame.settings.shape,
+                frame.settings.cornerRoundness, frame.settings.squircle)), ClipMode.INTERSECT, true)
             canvas.translate(contentX, contentY)
             sides.leading(canvas, frame.settings.sideContent, frame.snapshot.metadata.cover, frame.bands,
                 layout.leadingCenterX, lyricHeight / 2, layout.leadingSize, palette.spectrum.rgb)

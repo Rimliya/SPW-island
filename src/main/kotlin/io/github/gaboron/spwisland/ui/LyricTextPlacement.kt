@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-only
 package io.github.gaboron.spwisland.ui
 
+import io.github.gaboron.spwisland.core.IslandTextAlignment
 import io.github.gaboron.spwisland.core.Word
 import java.awt.font.TextHitInfo
 
@@ -10,7 +11,8 @@ internal object LyricTextPlacement {
                          val geometry: List<WordGeometry.Cell>?)
 
     fun calculate(shaped: ShapedText, text: String, words: List<Word>, position: Long,
-                  x: Float, available: Float, karaoke: Boolean, detailed: Boolean): Placement {
+                  x: Float, available: Float, karaoke: Boolean, detailed: Boolean,
+                  alignment: IslandTextAlignment = IslandTextAlignment.CENTER): Placement {
         val layout = shaped.layout
         val lightweight = karaoke && words.isNotEmpty() && !detailed
         val segment = if (lightweight) TimedKaraokeBoundary.at(text.length, words, position) else null
@@ -38,7 +40,13 @@ internal object LyricTextPlacement {
         val overflow = (shaped.width - available).coerceAtLeast(0f)
         val scroll = if (words.isNotEmpty()) (activeX - available * .65).coerceIn(0.0, overflow.toDouble()).toFloat()
             else if (overflow > 0) (position.coerceAtLeast(0) / 45.0).coerceAtMost(overflow.toDouble()).toFloat() else 0f
-        return Placement((if (overflow == 0f) x + (available - shaped.width) / 2 else x - scroll) - shaped.left,
+        val aligned = when {
+            overflow > 0f -> x - scroll
+            alignment == IslandTextAlignment.LEFT -> x
+            alignment == IslandTextAlignment.RIGHT -> x + available - shaped.width
+            else -> x + (available - shaped.width) / 2
+        }
+        return Placement(aligned - shaped.left,
             boundary, lightweight, geometry)
     }
 }

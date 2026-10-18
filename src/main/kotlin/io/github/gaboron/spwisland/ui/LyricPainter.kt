@@ -13,25 +13,29 @@ object LyricPainter {
              detailedKaraoke: Boolean = true,
              fallbackFont: Font = SystemUiFont.derive(font.style, font.size2D),
              contrastOutline: Boolean = false, shapedText: ShapedText? = null,
-             longToneAnalysis: LongToneAnalysis? = null, allowLongTone: Boolean = true) {
+             longToneAnalysis: LongToneAnalysis? = null, allowLongTone: Boolean = true,
+             alignment: IslandTextAlignment = IslandTextAlignment.CENTER,
+             outlineStyle: LyricOutlineStyle = LyricOutlineStyle.HARD) {
         if (text.isEmpty() || available <= 0) return
         val shaped = shapedText ?: LyricTypography.shape(text, font, fallbackFont)
         val layout = shaped.layout
-        val placement = LyricTextPlacement.calculate(shaped, text, words, position, x, available, karaoke, detailedKaraoke)
+        val placement = LyricTextPlacement.calculate(shaped, text, words, position, x, available, karaoke,
+            detailedKaraoke, alignment)
         val (origin, boundary, lightweight, geometry) = placement
         val copy = g.create() as Graphics2D
         try {
             copy.clip(Rectangle2D.Float(x - font.size2D * .16f, baseline - layout.ascent - font.size2D * .3f,
                 available + font.size2D * .32f, layout.ascent + layout.descent + font.size2D * .6f))
             if (contrastOutline && (!karaoke || words.isEmpty()))
-                LyricContrastOutline.draw(copy, shaped.outline, font.size2D, origin.toDouble(), baseline.toDouble())
+                LyricContrastOutline.draw(copy, shaped.outline, font.size2D, origin.toDouble(),
+                    baseline.toDouble(), outlineStyle)
             if (karaoke && words.isNotEmpty()) {
                 if (lightweight) drawLightweightKaraoke(copy, shaped, boundary, origin, baseline,
-                    font.size2D, color, contrastOutline)
+                    font.size2D, color, contrastOutline, outlineStyle)
                 else AmllWordPainter.draw(copy, shaped, text, words, position, origin, baseline,
                     font.size2D, true, color, contrastOutline, geometry,
                     if (allowLongTone && geometry != null) longToneAnalysis?.forWords(words) else null,
-                    allowLongTone)
+                    allowLongTone, outlineStyle)
                 return
             }
             copy.color = color
@@ -41,10 +45,12 @@ object LyricPainter {
 
     private fun drawLightweightKaraoke(g: Graphics2D, shaped: ShapedText, boundary: Float,
                                        origin: Float, baseline: Float, fontSize: Float,
-                                       color: Color, contrastOutline: Boolean) {
+                                       color: Color, contrastOutline: Boolean,
+                                       outlineStyle: LyricOutlineStyle = LyricOutlineStyle.HARD) {
         val width = if (shaped.layout.isLeftToRight) boundary - shaped.left else shaped.right - boundary
         if (contrastOutline)
-            LyricContrastOutline.draw(g, shaped.outline, fontSize, origin.toDouble(), baseline.toDouble())
+            LyricContrastOutline.draw(g, shaped.outline, fontSize, origin.toDouble(), baseline.toDouble(),
+                outlineStyle)
         g.color = Color(126, 129, 138)
         drawShaped(g, shaped, origin, baseline)
         if (width <= 0) return

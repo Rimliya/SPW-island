@@ -247,8 +247,8 @@ class IslandWindow(private val timeline: PlaybackSource, private val store: Sett
             if (clickThrough && settings.autoHideOnHover) globalPointer.location() else null
         }
             else runCatching { MouseInfo.getPointerInfo()?.location }.getOrNull()
-        val overIsland = mouse != null && IslandGeometry.silhouette(panel.width, panel.height, settings.notch,
-            settings.cornerRoundness)
+        val overIsland = mouse != null && IslandGeometry.silhouette(panel.width, panel.height, settings.shape,
+            settings.cornerRoundness, settings.squircle)
             .contains((mouse.x - window.x - panel.x).toDouble(), (mouse.y - window.y - panel.y).toDouble())
         val hoverRetention = mouse != null && Rectangle(
             window.x + panel.x - HOVER_MARGIN, window.y + panel.y - HOVER_MARGIN,
@@ -319,13 +319,13 @@ class IslandWindow(private val timeline: PlaybackSource, private val store: Sett
         inputRegion?.let { input ->
             val scale = window.graphicsConfiguration.defaultTransform
             val shape = if (clickThrough) Rectangle() else scale.createTransformedShape(surface.inputRegion())
-            input.update(window, shape, listOf(panel.bounds, settings.notch, settings.cornerRoundness,
+            input.update(window, shape, listOf(panel.bounds, settings.shape, settings.cornerRoundness, settings.squircle,
                 placementAnchor, scale.scaleX, scale.scaleY, clickThrough))
         }
         val hoverRegion = java.awt.geom.AffineTransform.getTranslateInstance(
             islandBounds.x.toDouble(), islandBounds.y.toDouble()
-        ).createTransformedShape(IslandGeometry.silhouette(panel.width, panel.height, settings.notch,
-            settings.cornerRoundness))
+        ).createTransformedShape(IslandGeometry.silhouette(panel.width, panel.height, settings.shape,
+            settings.cornerRoundness, settings.squircle))
         surface.hoverPose = hoverVisibility.update(
             clickThrough && settings.autoHideOnHover, mouse, hoverRegion, dt,
             !performance.animateLayout, settings.notch)

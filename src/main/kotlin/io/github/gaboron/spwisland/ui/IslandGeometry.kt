@@ -1,24 +1,25 @@
 // SPDX-License-Identifier: GPL-3.0-only
 package io.github.gaboron.spwisland.ui
 
+import io.github.gaboron.spwisland.core.IslandShape
 import java.awt.geom.AffineTransform
 import java.awt.Shape
 
 object IslandGeometry {
-    private data class SilhouetteKey(val width: Int, val height: Int, val notch: Boolean,
-                                     val roundness: Int)
+    private data class SilhouetteKey(val width: Int, val height: Int, val shape: IslandShape,
+                                     val roundness: Int, val squircle: Boolean)
     private var cachedKey: SilhouetteKey? = null
     private var cachedShape: Shape? = null
 
-    fun contentInset(width: Int, height: Int, notch: Boolean, top: Int, bottom: Int,
-                     cornerRoundness: Int = 60): Float {
-        val shape = silhouette(width, height, notch, cornerRoundness)
+    fun contentInset(width: Int, height: Int, shape: IslandShape, top: Int, bottom: Int,
+                     cornerRoundness: Int = 60, squircle: Boolean = true): Float {
+        val silhouette = silhouette(width, height, shape, cornerRoundness, squircle)
         var inset = 0
         for (y in top.coerceAtLeast(1)..bottom.coerceAtMost(height - 2)) {
             var left = 0; var right = width / 2
             while (left < right) {
                 val middle = (left + right) / 2
-                if (shape.contains(middle.toDouble(), y.toDouble())) right = middle else left = middle + 1
+                if (silhouette.contains(middle.toDouble(), y.toDouble())) right = middle else left = middle + 1
             }
             inset = maxOf(inset, left)
         }
@@ -26,32 +27,37 @@ object IslandGeometry {
     }
 
     /** Width reserved outside the element-safe rectangle for each curved side. */
-    fun frameInset(height: Double, notch: Boolean, cornerRoundness: Int): Double {
+    fun frameInset(height: Double, shape: IslandShape, cornerRoundness: Int): Double {
         val h = (height - 1.0).coerceAtLeast(0.0)
-        val scale = cornerRoundness.coerceIn(0, 100) / 100.0
-        val radius = if (notch) {
-            minOf(h * .45, 32.0) * scale + 10.0
-        } else h / 2.0 * scale
+        val scale = shape.roundness(cornerRoundness) / 100.0
+        val radius = when (shape) {
+            IslandShape.NOTCH -> minOf(h * .45, 32.0) * scale + 10.0
+            IslandShape.CAPSULE -> h / 2.0
+            IslandShape.SQUARE -> 0.0
+            IslandShape.ROUNDED_RECTANGLE -> h / 2.0 * scale
+        }
         return .5 + radius
     }
 
     @Synchronized
-    fun silhouette(width: Int, height: Int, notch: Boolean, cornerRoundness: Int = 60): Shape {
-        val key = SilhouetteKey(width, height, notch, cornerRoundness.coerceIn(0, 100))
+    fun silhouette(width: Int, height: Int, shape: IslandShape, cornerRoundness: Int = 60,
+                   squircle: Boolean = true): Shape {
+        val roundness = shape.roundness(cornerRoundness)
+        val key = SilhouetteKey(width, height, shape, roundness, squircle)
         if (key == cachedKey) return cachedShape!!
         val w = (width - 1).coerceAtLeast(0).toDouble()
         val h = (height - 1).coerceAtLeast(0).toDouble()
-        if (!notch) {
-            val pill = ContinuousCornerPath.roundedRectangle(w, h, cornerRoundness)
-            val centered = AffineTransform.getTranslateInstance(.5, .5).createTransformedShape(pill)
-            return cache(key, centered)
+        if (shape != IslandShape.NOTCH) {
+            val rounded = ContinuousCornerPath.roundedRectangle(w, h, roundness, squircle)
+            return cache(key, AffineTransform.getTranslateInstance(.5, .5).createTransformedShape(rounded))
         }
-        return cache(key, IslandNotchGeometry.silhouette(w, h, cornerRoundness))
+        return cache(key, IslandNotchGeometry.silhouette(w, h, cornerRoundness.coerceIn(0, 100)))
     }
 
-    fun progressEdgeInset(width: Int, height: Int, notch: Boolean, cornerRoundness: Int): Double =
-        if (notch) 10.5 + IslandNotchGeometry.bodyRadius(width - 1.0, height - 1.0, cornerRoundness)
-        else minOf(frameInset(height.toDouble(), false, cornerRoundness), width / 2.0)
+    fun progressEdgeInset(width: Int, height: Int, shape: IslandShape, cornerRoundness: Int): Double =
+        if (shape == IslandShape.NOTCH)
+            10.5 + IslandNotchGeometry.bodyRadius(width - 1.0, height - 1.0, cornerRoundness.coerceIn(0, 100))
+        else minOf(frameInset(height.toDouble(), shape, cornerRoundness), width / 2.0)
 
     private fun cache(key: SilhouetteKey, shape: Shape): Shape {
         cachedKey = key

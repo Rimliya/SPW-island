@@ -27,11 +27,13 @@ internal class IslandGpuLyrics(private val resources: IslandGpuResources) {
                     inset, pose.layout.mainBaseline, width - inset * 2, block.mainFont.size2D,
                     frame.settings.karaoke, frame.settings.performance.detailedKaraoke, palette.lyric.rgb,
                     palette.lyricOutline, pose.opacity, frame.longTones, adaptive = true,
-                    allowLongTone = block.allowLongTone)
+                    allowLongTone = block.allowLongTone, alignment = frame.settings.textAlignment,
+                    outlineStyle = frame.settings.outlineStyle)
                 block.shapedSub?.let { shaped -> line(canvas, shaped, block.sub.orEmpty(), emptyList(),
                     (time - (block.line?.startMs ?: 0)).coerceAtLeast(0), inset, pose.layout.subBaseline,
                     width - inset * 2, block.subFont.size2D, false, false, 0xffb1b6c3.toInt(),
-                    palette.lyricOutline, pose.opacity, frame.longTones, adaptive = true) }
+                    palette.lyricOutline, pose.opacity, frame.longTones, adaptive = true,
+                    alignment = frame.settings.textAlignment, outlineStyle = frame.settings.outlineStyle) }
             }
         }
     }
@@ -39,10 +41,13 @@ internal class IslandGpuLyrics(private val resources: IslandGpuResources) {
     fun line(canvas: Canvas, shaped: ShapedText, text: String, words: List<Word>, time: Long,
              x: Float, baseline: Float, available: Float, size: Float, karaoke: Boolean, detailed: Boolean,
              color: Int, contrast: Boolean, alpha: Float, longTones: LongToneAnalysis? = null,
-             adaptive: Boolean = false, allowLongTone: Boolean = true) {
+             adaptive: Boolean = false, allowLongTone: Boolean = true,
+             alignment: IslandTextAlignment = IslandTextAlignment.CENTER,
+             outlineStyle: LyricOutlineStyle = LyricOutlineStyle.HARD) {
         if (text.isEmpty() || available <= 0) return
         val adaptiveLine = adaptive && adaptiveContrast.active
-        val placement = LyricTextPlacement.calculate(shaped, text, words, time, x, available, karaoke, detailed)
+        val placement = LyricTextPlacement.calculate(shaped, text, words, time, x, available, karaoke,
+            detailed, alignment)
         canvas.scoped {
             canvas.clipRect(Rect.makeXYWH(x - size * .16f, baseline - shaped.layout.ascent - size * .3f,
                 available + size * .32f, shaped.layout.ascent + shaped.layout.descent + size * .6f), ClipMode.INTERSECT, true)
@@ -54,12 +59,12 @@ internal class IslandGpuLyrics(private val resources: IslandGpuResources) {
                 !karaoke || words.isEmpty() -> {
                     val path = resources.path(shaped.outline)
                     val paint = resources.fill(color, alpha)
-                    outline(canvas, path, size, contrast, alpha, adaptiveLine)
+                    outline(canvas, path, size, contrast, alpha, adaptiveLine, outlineStyle)
                     canvas.drawPath(path, paint)
                 }
                 placement.lightweight -> {
                     val path = resources.path(shaped.outline)
-                    outline(canvas, path, size, contrast, alpha, adaptiveLine)
+                    outline(canvas, path, size, contrast, alpha, adaptiveLine, outlineStyle)
                     canvas.drawPath(path, resources.fill(DIM, alpha))
                     val width = if (shaped.layout.isLeftToRight) placement.boundary - shaped.left else shaped.right - placement.boundary
                     if (width > 0) {
@@ -68,16 +73,18 @@ internal class IslandGpuLyrics(private val resources: IslandGpuResources) {
                         canvas.drawPath(path, resources.fill(color, alpha))
                     }
                 }
-                placement.geometry == null -> timed(canvas, shaped, words, time, size, color, contrast, alpha, adaptiveLine)
+                placement.geometry == null -> timed(canvas, shaped, words, time, size, color, contrast, alpha,
+                    adaptiveLine, outlineStyle)
                 else -> words(canvas, shaped, words, placement.geometry, time, size, color, contrast, alpha,
-                    longTones.takeIf { allowLongTone }, adaptiveLine)
+                    longTones.takeIf { allowLongTone }, adaptiveLine, outlineStyle)
             }
         }
     }
 
     private fun words(canvas: Canvas, shaped: ShapedText, words: List<Word>, geometry: List<WordGeometry.Cell>,
                       time: Long, size: Float, color: Int, contrast: Boolean, alpha: Float,
-                      longTones: LongToneAnalysis?, adaptive: Boolean) {
+                      longTones: LongToneAnalysis?, adaptive: Boolean,
+                      outlineStyle: LyricOutlineStyle = LyricOutlineStyle.HARD) {
         val flags = longTones?.forWords(words)
         for ((wordIndex, word) in words.withIndex()) {
             val cell = geometry[wordIndex]
@@ -91,7 +98,7 @@ internal class IslandGpuLyrics(private val resources: IslandGpuResources) {
                     canvas.scale(pose.scale.toFloat(), pose.scale.toFloat())
                     canvas.translate(-bounds.centerX.toFloat(), -bounds.centerY.toFloat())
                     glow(canvas, path, size, color, pose.glow, alpha)
-                    outline(canvas, path, size, contrast, alpha, adaptive)
+                    outline(canvas, path, size, contrast, alpha, adaptive, outlineStyle)
                     canvas.drawPath(path, paint)
                 }
             }
@@ -99,9 +106,10 @@ internal class IslandGpuLyrics(private val resources: IslandGpuResources) {
     }
 
     private fun timed(canvas: Canvas, shaped: ShapedText, words: List<Word>, time: Long, size: Float,
-                      color: Int, contrast: Boolean, alpha: Float, adaptive: Boolean) {
+                      color: Int, contrast: Boolean, alpha: Float, adaptive: Boolean,
+                      outlineStyle: LyricOutlineStyle = LyricOutlineStyle.HARD) {
         val path = resources.path(shaped.outline)
-        outline(canvas, path, size, contrast, alpha, adaptive)
+        outline(canvas, path, size, contrast, alpha, adaptive, outlineStyle)
         var start = 0
         for (word in words) {
             val end = start + word.text.length
@@ -116,11 +124,11 @@ internal class IslandGpuLyrics(private val resources: IslandGpuResources) {
         }
     }
 
-    private fun outline(canvas: Canvas, path: Path, size: Float,
-                        contrast: Boolean, alpha: Float, adaptive: Boolean) {
+    private fun outline(canvas: Canvas, path: Path, size: Float, contrast: Boolean, alpha: Float,
+                        adaptive: Boolean, style: LyricOutlineStyle) {
         if (adaptive && adaptiveContrast.draw(canvas, path,
                 resources.stroke(0xc8000000.toInt(), (size * .09f).coerceAtLeast(1.5f), alpha))) return
-        if (contrast) outline(canvas, path, size, alpha)
+        if (contrast) layers(canvas, path, size, alpha, style)
     }
 
     private fun highlight(ltr: Boolean, bounds: Rectangle2D, progress: Double, size: Float, color: Int, alpha: Float): Paint {
@@ -132,8 +140,36 @@ internal class IslandGpuLyrics(private val resources: IslandGpuResources) {
             if (ltr) intArrayOf(color, DIM) else intArrayOf(DIM, color), floatArrayOf(0f, 1f), alpha)
     }
 
-    private fun outline(canvas: Canvas, path: Path, size: Float, alpha: Float) =
-        canvas.drawPath(path, resources.stroke(0xc8000000.toInt(), (size * .09f).coerceAtLeast(1.5f), alpha))
+    private fun layers(canvas: Canvas, path: Path, size: Float, alpha: Float, style: LyricOutlineStyle) {
+        val edge = (size * .09f).coerceAtLeast(1.5f)
+        when (style) {
+            LyricOutlineStyle.HARD -> canvas.drawPath(path, resources.stroke(0xc8000000.toInt(), edge, alpha))
+            LyricOutlineStyle.GRADIENT -> {
+                canvas.drawPath(path, resources.stroke(0x26000000, edge * 3.2f, alpha))
+                canvas.drawPath(path, resources.stroke(0x56000000, edge * 2.1f, alpha))
+                canvas.drawPath(path, resources.stroke(0xba000000.toInt(), edge, alpha))
+            }
+            LyricOutlineStyle.DISSOLVE -> dissolve(canvas, path, size, edge, alpha)
+        }
+    }
+
+    private fun dissolve(canvas: Canvas, path: Path, size: Float, edge: Float, alpha: Float) {
+        val paint = resources.outlineStroke()
+        try {
+            for (layer in DISSOLVE_LAYERS.indices.reversed()) {
+                paint.pathEffect?.close()
+                paint.pathEffect = PathEffect.makeDash(floatArrayOf(
+                    size * (.30f + .12f * layer), size * (.22f + .10f * layer)), size * .37f * layer)
+                paint.strokeWidth = edge * DISSOLVE_LAYERS[layer]
+                paint.color = 0xff000000.toInt()
+                paint.setAlphaf(DISSOLVE_ALPHAS[layer] / 255f * alpha)
+                canvas.drawPath(path, paint)
+            }
+        } finally {
+            paint.pathEffect?.close()
+            paint.pathEffect = null
+        }
+    }
 
     private fun glow(canvas: Canvas, path: Path, size: Float, color: Int, emphasis: Double, alpha: Float) {
         val strength = emphasis.coerceIn(0.0, 1.0)
@@ -145,5 +181,9 @@ internal class IslandGpuLyrics(private val resources: IslandGpuResources) {
         if (narrow > 0) canvas.drawPath(path, resources.stroke(tint or (narrow shl 24), (size * .06f).coerceAtLeast(1f), alpha))
     }
 
-    companion object { private const val DIM = 0xff7e818a.toInt() }
+    companion object {
+        private const val DIM = 0xff7e818a.toInt()
+        private val DISSOLVE_LAYERS = floatArrayOf(.9f, 1.5f, 2.2f, 3.0f, 3.9f)
+        private val DISSOLVE_ALPHAS = intArrayOf(24, 34, 44, 36, 18)
+    }
 }

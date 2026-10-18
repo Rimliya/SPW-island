@@ -26,7 +26,7 @@ class IslandPanel(private val actions: PlaybackActions, report: (Throwable) -> U
     private var infoLabel = IslandLyricsPreparation.trackLabel(null)
     private var infoShape: ShapedText? = null
     override fun paint(graphics: Graphics) = paintPresentation(graphics as Graphics2D,
-        IslandHoverGeometry.frame(width, height, settings.notch, settings.cornerRoundness,
+        IslandHoverGeometry.frame(width, height, settings.shape, settings.cornerRoundness, settings.squircle,
             IslandHoverMotion.Pose.SHOWN))
 
     internal fun paintPresentation(target: Graphics2D, frame: IslandHoverGeometry.Frame) {
@@ -178,7 +178,7 @@ class IslandPanel(private val actions: PlaybackActions, report: (Throwable) -> U
     private fun paintContent(graphics: Graphics2D) {
         val g = graphics.create() as Graphics2D
         try {
-            val shape = IslandGeometry.silhouette(width, height, settings.notch, settings.cornerRoundness)
+            val shape = IslandGeometry.silhouette(width, height, settings.shape, settings.cornerRoundness, settings.squircle)
             val palette = IslandPalette.from(settings, snapshot.metadata.coverRgb)
             val reveal = expansion ?: if (expanded) 1.0 else 0.0
             val outerWidth = animatedWidth.toFloat()
@@ -188,7 +188,7 @@ class IslandPanel(private val actions: PlaybackActions, report: (Throwable) -> U
                 HorizontalAnchor.CENTER -> (width / 2).toFloat() - outerWidth / 2f
                 HorizontalAnchor.RIGHT -> width - outerWidth
             }
-            val frameInset = IslandGeometry.frameInset(contentHeight.toDouble(), settings.notch,
+            val frameInset = IslandGeometry.frameInset(contentHeight.toDouble(), settings.shape,
                 settings.cornerRoundness).toFloat()
             val contentWidth = (outerWidth - frameInset * 2f).coerceAtLeast(1f)
             val contentX = outerX + frameInset
