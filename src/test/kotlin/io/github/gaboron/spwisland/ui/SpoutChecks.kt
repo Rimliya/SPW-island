@@ -80,7 +80,7 @@ fun main() {
         check(!a.contentEquals(native(settings, snap.copy(line = nextLine, positionMs = 13000))))
         check(native(settings.copy(experimentalMultiLine = true), snap.copy(lyrics = listOf(line,
             line.copy(startMs = 1000, text = "重叠歌词", words = emptyList())))).any { it != 0 })
-        val small = settings.copy(spout = settings.spout.copy(width = 640, height = 256), notch = true)
+        val small = settings.copy(spout = settings.spout.copy(width = 640, height = 256), shape = IslandShape.NOTCH)
         check(native(small).size == 640 * 256)
         check(native(settings.copy(lowPerformance = true)).any { it != 0 })
         val idle = PlaybackSnapshot(null, null, 0, false, PlaybackStatus.IDLE)

@@ -59,8 +59,14 @@ class HostSettings(private val manager: ConfigManager, private val changed: () -
         clickThrough = config.get("click_through", accepted?.clickThrough ?: false),
         autoHideOnHover = config.get("auto_hide_on_hover", accepted?.autoHideOnHover ?: false),
         // Keep the original key so existing users retain their enabled setting after the rename.
-        lowPerformance = config.get("reduced_motion", false), notch = config.get("shape", "pill") == "notch",
+        lowPerformance = config.get("reduced_motion", false),
+        shape = IslandShape.fromStorage(config.get("shape", IslandShape.ROUNDED_RECTANGLE.storageName)),
+        squircle = config.get("squircle", true),
         cornerRoundness = number("corner_roundness", 60, 0, 100),
+        heightMode = IslandHeightMode.fromStorage(config.get("height_mode", IslandHeightMode.AUTO.storageName)),
+        fixedHeight = number("fixed_height", 58, 40, 200),
+        textAlignment = IslandTextAlignment.fromStorage(config.get("text_alignment", "center")),
+        outlineStyle = LyricOutlineStyle.fromStorage(config.get("outline_style", "hard")),
         lyricCoverColor = config.get("lyric_cover_color", false),
         backgroundCoverColor = config.get("background_cover_color", true),
         backgroundStyle = IslandBackgroundStyle.fromStorage(config.get("background_style", "classic")),
@@ -277,6 +283,7 @@ class HostSettings(private val manager: ConfigManager, private val changed: () -
         val INTEGER_SETTINGS = mapOf(
             "corner_roundness" to IntegerLimits(60, 0, 100),
             "font_size" to IntegerLimits(22, 12, 72),
+            "fixed_height" to IntegerLimits(58, 40, 200),
             "max_width" to IntegerLimits(640, 280, 1200),
             "opacity" to IntegerLimits(96, 35, 100),
             "offset_ms" to IntegerLimits(0, -2000, 2000)

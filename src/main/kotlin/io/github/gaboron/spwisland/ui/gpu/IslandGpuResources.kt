@@ -20,6 +20,11 @@ internal class IslandGpuResources : AutoCloseable {
         strokeCap = PaintStrokeCap.ROUND; strokeJoin = PaintStrokeJoin.ROUND
     }
     private val opacity = NativePaint()
+    /** Free-form stroke paint for the broken dissolve layers; the caller owns its state. */
+    private val outline = NativePaint().apply {
+        isAntiAlias = true; mode = PaintMode.STROKE
+        strokeCap = PaintStrokeCap.ROUND; strokeJoin = PaintStrokeJoin.ROUND
+    }
     private var shader: Shader? = null
     private var fillColor: Int? = null
     private var fillAlpha = Float.NaN
@@ -36,6 +41,8 @@ internal class IslandGpuResources : AutoCloseable {
         if (fillBlend != blend) { fill.blendMode = blend; fillBlend = blend }
         return fill
     }
+
+    fun outlineStroke(): NativePaint = outline
 
     fun stroke(color: Int, width: Float, alpha: Float = 1f): NativePaint {
         if (strokeColor != color) { stroke.color = color; strokeColor = color; strokeAlpha = Float.NaN }
@@ -107,7 +114,7 @@ internal class IslandGpuResources : AutoCloseable {
     }
 
     override fun close() {
-        fill.close(); stroke.close(); opacity.close(); shader?.close(); shader = null
+        fill.close(); stroke.close(); opacity.close(); outline.close(); shader?.close(); shader = null
         paths.values.forEach(Path::close); paths.clear(); regions.clear()
         covers.values.forEach(Image::close); covers.clear()
     }

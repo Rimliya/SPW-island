@@ -73,14 +73,18 @@
           "key": "shape",
           "title": "外观",
           "entries": [
+            "圆角矩形",
             "胶囊",
+            "方形",
             "顶部刘海"
           ],
           "entry_values": [
-            "pill",
+            "rounded",
+            "capsule",
+            "square",
             "notch"
           ],
-          "default_value": "pill"
+          "default_value": "rounded"
         },
         {
           "type": "seekbar",
@@ -89,7 +93,48 @@
           "default_value": 60,
           "min": 0,
           "max": 100,
-          "summary": "0 为直角，100 为最大圆角；圆角会随词岛高度自动缩放。"
+          "summary": "0 为直角，100 为最大圆角；圆角会随词岛高度自动缩放，胶囊与方形忽略此项。"
+        },
+        {
+          "type": "switch",
+          "key": "squircle",
+          "title": "连续曲率圆角",
+          "default_value": true,
+          "summary": "开启后圆角使用连续曲率（squircle）；关闭则使用标准圆弧。"
+        },
+        {
+          "type": "list",
+          "key": "height_mode",
+          "title": "词岛高度",
+          "entries": ["自动", "固定"],
+          "entry_values": ["auto", "fixed"],
+          "default_value": "auto"
+        },
+        {
+          "type": "seekbar",
+          "key": "fixed_height",
+          "title": "固定高度",
+          "default_value": 58,
+          "min": 40,
+          "max": 200,
+          "summary": "仅在“词岛高度”选择“固定”时生效。"
+        },
+        {
+          "type": "list",
+          "key": "text_alignment",
+          "title": "歌词对齐",
+          "entries": ["左对齐", "居中", "右对齐"],
+          "entry_values": ["left", "center", "right"],
+          "default_value": "center"
+        },
+        {
+          "type": "list",
+          "key": "outline_style",
+          "title": "歌词描边",
+          "entries": ["硬边", "向外渐变", "溶边（轻量）"],
+          "entry_values": ["hard", "gradient", "dissolve"],
+          "default_value": "hard",
+          "summary": "仅在封面取色导致歌词与背景对比度不足时绘制。"
         },
         {
           "type": "button",
@@ -144,21 +189,6 @@
           "default_value": 22,
           "min": 12,
           "max": 72
-        },
-        {
-          "type": "seekbar",
-          "key": "max_width",
-          "title": "最大宽度",
-          "default_value": 640,
-          "min": 280,
-          "max": 1200
-        },
-        {
-          "type": "switch",
-          "key": "fixed_width",
-          "title": "固定词岛宽度",
-          "default_value": false,
-          "summary": "开启后始终使用“最大宽度”的值，不再随歌词长度收缩。"
         },
         {
           "type": "list",

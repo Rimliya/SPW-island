@@ -2,6 +2,7 @@
 // Links to the AGPL-3.0-only AMLL motion port under GPLv3 section 13; see NOTICE.
 package io.github.gaboron.spwisland.ui
 
+import io.github.gaboron.spwisland.core.LyricOutlineStyle
 import io.github.gaboron.spwisland.core.Word
 import io.github.gaboron.spwisland.longtone.LongToneRuleRegistry
 import java.awt.*
@@ -14,9 +15,10 @@ object AmllWordPainter {
              origin: Float, baseline: Float, fontSize: Float, motion: Boolean, color: Color = Color.WHITE,
              contrastOutline: Boolean = false,
              geometry: List<WordGeometry.Cell>? = WordGeometry.ready(shaped, text, words),
-             longTones: BooleanArray? = null, allowLongTone: Boolean = true) {
+             longTones: BooleanArray? = null, allowLongTone: Boolean = true,
+             outlineStyle: LyricOutlineStyle = LyricOutlineStyle.HARD) {
         if (geometry == null) {
-            drawTimed(g, shaped, words, time, origin, baseline, fontSize, color, contrastOutline)
+            drawTimed(g, shaped, words, time, origin, baseline, fontSize, color, contrastOutline, outlineStyle)
             return
         }
         for ((wordIndex, word) in words.withIndex()) {
@@ -37,7 +39,7 @@ object AmllWordPainter {
                     copy.translate(pose.xEm * fontSize + bounds.centerX, pose.yEm * fontSize + bounds.centerY)
                     copy.scale(pose.scale, pose.scale); copy.translate(-bounds.centerX, -bounds.centerY)
                     LyricGlow.draw(copy, area, fontSize, color, pose.glow)
-                    if (contrastOutline) LyricContrastOutline.draw(copy, area, fontSize)
+                    if (contrastOutline) LyricContrastOutline.draw(copy, area, fontSize, style = outlineStyle)
                     copy.paint = paint
                     copy.fill(area)
                 } finally { copy.dispose() }
@@ -48,9 +50,11 @@ object AmllWordPainter {
     /** Timing is independent of outline readiness; only floating/glow waits for preparation. */
     internal fun drawTimed(g: Graphics2D, shaped: ShapedText, words: List<Word>, time: Long,
                            origin: Float, baseline: Float, fontSize: Float, color: Color = Color.WHITE,
-                           contrastOutline: Boolean = false) {
+                           contrastOutline: Boolean = false,
+                           outlineStyle: LyricOutlineStyle = LyricOutlineStyle.HARD) {
         if (contrastOutline)
-            LyricContrastOutline.draw(g, shaped.outline, fontSize, origin.toDouble(), baseline.toDouble())
+            LyricContrastOutline.draw(g, shaped.outline, fontSize, origin.toDouble(), baseline.toDouble(),
+                outlineStyle)
         var start = 0
         for (word in words) {
             val end = start + word.text.length

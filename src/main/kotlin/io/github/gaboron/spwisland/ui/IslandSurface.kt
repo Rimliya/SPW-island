@@ -18,7 +18,7 @@ class IslandSurface(val island: IslandPanel) : JPanel(null) {
         try {
             g.translate(island.x.toDouble(), island.y.toDouble())
             island.paintPresentation(g, IslandHoverGeometry.frame(island.width, island.height,
-                island.settings.notch, island.settings.cornerRoundness, hoverPose))
+                island.settings.shape, island.settings.cornerRoundness, island.settings.squircle, hoverPose))
         } finally { g.dispose() }
     }
     override fun paintComponent(graphics: Graphics) {
@@ -30,8 +30,8 @@ class IslandSurface(val island: IslandPanel) : JPanel(null) {
         } finally { g.dispose() }
     }
     fun inputRegion(): Shape {
-        val shape = IslandGeometry.silhouette(island.width, island.height, island.settings.notch,
-            island.settings.cornerRoundness)
+        val shape = IslandGeometry.silhouette(island.width, island.height, island.settings.shape,
+            island.settings.cornerRoundness, island.settings.squircle)
         // The region includes the antialiased outer edge instead of clipping it to a hard pixel boundary.
         val padded = Area(shape).apply { add(Area(BasicStroke(2f).createStrokedShape(shape))) }
         return AffineTransform.getTranslateInstance(island.x.toDouble(), island.y.toDouble()).createTransformedShape(padded)

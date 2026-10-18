@@ -116,8 +116,8 @@ internal class SkiaSpoutPainter : AutoCloseable {
             val frame = advance.scene
             val canvas = destination.canvas
             canvas.clear(0)
-            val hover = IslandHoverGeometry.frame(frame.width, frame.height, frame.settings.notch,
-                frame.settings.cornerRoundness, IslandHoverMotion.Pose.SHOWN)
+            val hover = IslandHoverGeometry.frame(frame.width, frame.height, frame.settings.shape,
+                frame.settings.cornerRoundness, frame.settings.squircle, IslandHoverMotion.Pose.SHOWN)
             canvas.scoped {
                 canvas.translate(((outputWidth - frame.width * advance.scale) / 2).toFloat(),
                     ((outputHeight - frame.height * advance.scale) / 2).toFloat())

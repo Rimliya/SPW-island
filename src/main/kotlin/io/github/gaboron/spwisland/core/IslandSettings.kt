@@ -32,8 +32,13 @@ data class IslandSettings(
     val clickThrough: Boolean = false,
     val autoHideOnHover: Boolean = false,
     val lowPerformance: Boolean = false,
-    val notch: Boolean = false,
+    val shape: IslandShape = IslandShape.ROUNDED_RECTANGLE,
+    val squircle: Boolean = true,
     val cornerRoundness: Int = 60,
+    val heightMode: IslandHeightMode = IslandHeightMode.AUTO,
+    val fixedHeight: Int = 58,
+    val textAlignment: IslandTextAlignment = IslandTextAlignment.CENTER,
+    val outlineStyle: LyricOutlineStyle = LyricOutlineStyle.HARD,
     val lyricCoverColor: Boolean = false,
     val backgroundCoverColor: Boolean = true,
     val backgroundStyle: IslandBackgroundStyle = IslandBackgroundStyle.CLASSIC,
@@ -53,7 +58,10 @@ data class IslandSettings(
     val positionAnchor: IslandAnchor? = null,
     val legacyCenterX: Int? = null,
     val legacyTop: Int? = null
-) : java.io.Serializable
+) : java.io.Serializable {
+    /** Notch motion, placement and occlusion still branch on this boolean. */
+    val notch: Boolean get() = shape == IslandShape.NOTCH
+}
 
 interface SettingsStore {
     fun read(): IslandSettings

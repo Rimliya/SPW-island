@@ -18,17 +18,18 @@ internal object ContinuousCornerPath {
     private const val CIRCULAR_TRANSITION_START = .6
     private const val CIRCLE_BEZIER = .5522847498307936
 
-    fun roundedRectangle(width: Double, height: Double, roundness: Int): Shape =
-        roundedRectangle(width, height, roundness.toDouble())
+    fun roundedRectangle(width: Double, height: Double, roundness: Int, squircle: Boolean = true): Shape =
+        roundedRectangle(width, height, roundness.toDouble(), squircle)
 
-    fun roundedRectangle(width: Double, height: Double, roundness: Double): Shape {
+    fun roundedRectangle(width: Double, height: Double, roundness: Double, squircle: Boolean = true): Shape {
         if (width <= 0.0 || height <= 0.0) return Path2D.Double()
         val radius = radius(width, height, roundness)
         if (radius <= 0.0) return Rectangle2D.Double(0.0, 0.0, width, height)
         if (roundness >= 100) {
             return RoundRectangle2D.Double(0.0, 0.0, width, height, radius * 2.0, radius * 2.0)
         }
-        val exponent = exponent(roundness)
+        // A squircle keeps the continuous (superellipse) corner; plain mode uses a circular arc.
+        val exponent = if (squircle) exponent(roundness) else 2.0
         return Path2D.Double().apply {
             moveTo(radius, 0.0)
             lineTo(width - radius, 0.0)

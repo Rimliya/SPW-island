@@ -63,7 +63,7 @@ internal object IslandBackgroundProgress {
     private fun drawEdgeLine(g: Graphics2D, shape: Shape, width: Int, height: Int,
                             progress: Double, settings: IslandSettings,
                             palette: IslandPalette, opacity: Double) {
-        val edgeInset = IslandGeometry.progressEdgeInset(width, height, settings.notch, settings.cornerRoundness)
+        val edgeInset = IslandGeometry.progressEdgeInset(width, height, settings.shape, settings.cornerRoundness)
         val start = edgeInset.coerceAtLeast(2.0)
         val end = (width - edgeInset).coerceAtLeast(start)
         val filledEnd = start + (end - start) * progress

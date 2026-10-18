@@ -479,7 +479,7 @@ Windows 和 Linux 共用 `preference_config.json`，平台专属设置在名称�
 | `native/glass/DesktopViewport.h` | 屏幕坐标固定的裁片范围与换块滞回，拖动时复用既有像素 |
 | `platform/SkikoRuntime.kt` | 加载插件自己的 Skiko 原生库，供词岛与字体窗口共用 |
 | `IslandPlacement.kt` | 工作区计算、九宫格锚点、刘海顶部约束、拖动磁吸和稳定画布位置 |
-| `IslandGeometry.kt` | 静止胶囊/刘海轮廓、内容安全内缩、进度细线内缩和轮廓缓存 |
+| `IslandGeometry.kt` | 静止形状轮廓（圆角矩形 / 胶囊 / 方形 / 刘海，支持连续曲率）、内容安全内缩、进度细线内缩和轮廓缓存 |
 | `IslandNotchGeometry.kt` | 静止与形变刘海共用的顶部粘连、主体横向拉伸与高度收缩几何 |
 | `ContinuousCornerPath.kt` | 连续圆角 / 超椭圆圆角路径生成 |
 | `IslandAlphaMask.kt` | Java2D 兼容路径的设备像素内容层与抗锯齿轮廓蒙版 |
@@ -488,7 +488,7 @@ Windows 和 Linux 共用 `preference_config.json`，平台专属设置在名称�
 | `IslandTransitionMotion.kt` | 隐藏、控件和进度淡入淡出共用的有限时长 Hermite 运动；可配置时长、两端过冲和单次回弹，反向时接续速度 |
 | `IslandHoverMotion.kt` | 悬停隐藏运动参数及完整显示 / 动画中的状态；恢复时单次回弹 |
 | `IslandExpandedMotion.kt` | 与隐藏动画共用速率的控件打开 / 收起运动，两端各有一次过冲回弹 |
-| `IslandHoverGeometry.kt` | 将可见状态映射为刘海形变或胶囊收圆，并计算内容淡出、位移和画布留边 |
+| `IslandHoverGeometry.kt` | 将可见状态映射为刘海形变或非刘海形状收圆，并计算内容淡出、位移和画布留边 |
 | `IslandExpandedContentTransition.kt` | 展开控件条共用的透明度曲线，以及兼容路径的像素缓冲 |
 
 `IslandWindow` 是窗口状态协调者，不应继续承担具体歌词、形状或菜单绘制。
