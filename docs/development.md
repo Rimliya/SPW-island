@@ -577,9 +577,12 @@ LyricPainter
 | 文件 | 职责 |
 | --- | --- |
 | `IslandLeadingContent.kt` | 绘制左侧封面或频谱，应用封面显隐、缩放与黑胶环 |
-| `IslandTrailingContent.kt` | 绘制右侧频谱或播放状态 |
+| `IslandTrailingContent.kt` | 绘制右侧频谱、时钟或播放状态 |
 | `IslandBackgroundMaterialPainter.kt` | 绘制纯色、线性渐变、多色流光和封面迷彩背景 |
-| `IslandVisualColors.kt` | Java2D 与 Skia 共用的颜色与封面调色板逻辑 |
+| `IslandSpectrumPainter.kt` | 四柱/五柱/底部频谱、实心/折线和取色几何 |
+| `IslandClockPainter.kt` | 文本、七段数码管、点阵和像素风时钟 |
+| `IslandClockGlyphs.kt` | 时钟字形表与 12/24 小时格式化 |
+| `IslandVisualColors.kt` | Java2D 与 Skia 共用的颜色、频段插值和频谱取色逻辑 |
 | `IslandArtworkImages.kt` | 将封面 ARGB 缓冲转换为复用的 Java2D 图像 |
 | `IslandPalette.kt` | 根据默认配色、设置和封面多色调色板生成歌词、背景和频谱颜色 |
 | `IslandBackgroundProgress.kt` | 在词岛背景中绘制整曲播放进度，包括注水和边缘细线；细线位于胶囊顶部或刘海底部 |

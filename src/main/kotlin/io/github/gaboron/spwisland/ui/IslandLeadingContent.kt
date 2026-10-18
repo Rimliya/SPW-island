@@ -15,23 +15,9 @@ internal object IslandLeadingContent {
             LeadingContent.COVER -> if (settings.coverVisible)
                 cover(g, cover, centerX, centerY, size * settings.coverScale / 100f, palette.spectrum,
                     settings.coverVinylRing)
-            LeadingContent.SPECTRUM -> drawSpectrum(g, bands, centerX, centerY, size, palette.spectrum)
+            LeadingContent.SPECTRUM -> if (settings.spectrumLayout != SpectrumLayout.NONE)
+                IslandSpectrumPainter.drawSlot(g, settings, bands, palette, centerX, centerY, size)
             LeadingContent.NONE -> Unit
-        }
-    }
-
-    internal fun drawSpectrum(g: Graphics2D, bands: FloatArray, centerX: Float, centerY: Float,
-                              size: Float, accent: Color) {
-        val scale = size / BASE_SIZE
-        val barWidth = 3f * scale
-        val corner = 3f * scale
-        g.color = accent
-        for (index in 0 until 4) {
-            val barHeight = 2f * scale + bands.getOrElse(index) { 0f }.coerceIn(0f, 1f) * (size - 2f * scale)
-            g.fill(RoundRectangle2D.Float(
-                centerX - 11f * scale + index * 6f * scale, centerY - barHeight / 2f,
-                barWidth, barHeight, corner, corner
-            ))
         }
     }
 

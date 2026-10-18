@@ -62,6 +62,7 @@ internal class IslandGpuScene : AutoCloseable {
             canvas.translate(contentX, contentY)
             sides.leading(canvas, frame.settings, frame.snapshot.metadata.cover, frame.bands,
                 layout.leadingCenterX, lyricHeight / 2, layout.leadingSize, palette)
+            sides.bottom(canvas, frame.settings, frame.bands, palette, contentWidth, lyricHeight)
             lyrics.rows(canvas, frame, contentWidth, lyricHeight, layout.textInset)
             sides.trailing(canvas, frame.settings, frame.snapshot, frame.bands, layout.statusCenterX(contentWidth),
                 lyricHeight / 2, layout.leadingSize, palette, frame.settings.performance.animateLayout)

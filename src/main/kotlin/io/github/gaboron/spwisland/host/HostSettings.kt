@@ -75,6 +75,14 @@ class HostSettings(private val manager: ConfigManager, private val changed: () -
         fixedWidth = config.get("fixed_width", false),
         leadingContent = leadingContentFromStorage(),
         trailingContent = TrailingContent.fromStorage(config.get("trailing_content", defaultTrailing())),
+        spectrumLayout = SpectrumLayout.fromStorage(config.get("spectrum_layout", defaultSpectrumLayout())),
+        spectrumColorMode = SpectrumColorMode.fromStorage(config.get("spectrum_color_mode", defaultSpectrumColorMode())),
+        spectrumManualColor = config.get("spectrum_manual_color", "").trim(),
+        spectrumStyle = SpectrumStyle.fromStorage(config.get("spectrum_style", "solid")),
+        spectrumRounded = config.get("spectrum_rounded", true),
+        spectrumOpacity = number("spectrum_opacity", 100, 20, 100),
+        clock24Hour = config.get("clock_24h", true),
+        clockStyle = ClockStyle.fromStorage(config.get("clock_style", "dot")),
         backgroundMaterial = BackgroundMaterial.fromStorage(config.get("background_material", "solid")),
         gradientAngle = number("gradient_angle", 135, 0, 360),
         gradientStartColor = config.get("gradient_start", "").trim(),
@@ -141,6 +149,11 @@ class HostSettings(private val manager: ConfigManager, private val changed: () -
         "none" -> "none"
         else -> "status"
     }
+
+    private fun defaultSpectrumLayout(): String = if (legacySides() == "none") "none" else "right_bars"
+
+    private fun defaultSpectrumColorMode(): String =
+        if (config.get("spectrum_cover_color", true)) "cover" else "manual"
 
     private fun decodePreservingPluginSettings(position: PositionState?, font: FontState?): IslandSettings {
         val decoded = decode()
@@ -309,6 +322,7 @@ class HostSettings(private val manager: ConfigManager, private val changed: () -
             "flow_speed" to IntegerLimits(100, 10, 400),
             "mosaic_block" to IntegerLimits(16, 4, 64),
             "cover_scale" to IntegerLimits(100, 40, 160),
+            "spectrum_opacity" to IntegerLimits(100, 20, 100),
             "max_width" to IntegerLimits(640, 280, 1200),
             "opacity" to IntegerLimits(96, 35, 100),
             "offset_ms" to IntegerLimits(0, -2000, 2000)
