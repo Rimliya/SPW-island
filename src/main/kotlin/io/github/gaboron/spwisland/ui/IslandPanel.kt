@@ -207,6 +207,7 @@ class IslandPanel(private val actions: PlaybackActions, report: (Throwable) -> U
             IslandLeadingContent.draw(g, settings, snapshot.metadata.cover,
                 bands, layout.leadingCenterX, lyricAreaTop + lyricAreaHeight / 2f,
                 layout.leadingSize, palette)
+            IslandSpectrumPainter.drawBottom(g, settings, bands, palette, contentWidth, lyricAreaHeight)
             val lyrics = g.create() as Graphics2D
             try {
                 lyrics.translate(0.0, lyricAreaTop.toDouble())

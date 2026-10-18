@@ -8,14 +8,17 @@ import java.awt.geom.Ellipse2D
 import java.awt.geom.RoundRectangle2D
 import kotlin.math.sin
 
-/** Paints the configured trailing spectrum or the playback status. */
+/** Paints the trailing spectrum, clock or playback status. */
 internal object IslandTrailingContent {
     fun draw(g: Graphics2D, settings: IslandSettings, snapshot: PlaybackSnapshot, bands: FloatArray,
              centerX: Float, centerY: Float, size: Float, palette: IslandPalette, animate: Boolean) {
         when (settings.trailingContent) {
-            TrailingContent.SPECTRUM ->
-                IslandLeadingContent.drawSpectrum(g, bands, centerX, centerY, size, palette.spectrum)
+            TrailingContent.SPECTRUM -> if (settings.spectrumLayout == SpectrumLayout.RIGHT_BARS ||
+                settings.spectrumLayout == SpectrumLayout.RIGHT_FIVE)
+                IslandSpectrumPainter.drawSlot(g, settings, bands, palette, centerX, centerY, size)
             TrailingContent.STATUS -> drawStatus(g, snapshot, centerX, centerY, animate)
+            TrailingContent.CLOCK ->
+                IslandClockPainter.draw(g, settings, centerX, centerY, size, palette.spectrum)
             TrailingContent.NONE -> Unit
         }
     }

@@ -7,13 +7,17 @@ import org.jetbrains.skia.*
 import kotlin.math.sin
 
 internal class IslandGpuSides(private val resources: IslandGpuResources) {
+    private val spectrum = IslandGpuSpectrum(resources)
+    private val clock = IslandGpuClock(resources)
+
     fun leading(canvas: Canvas, settings: IslandSettings, artwork: CoverArtwork?, bands: FloatArray,
                 x: Float, y: Float, size: Float, palette: IslandPalette) {
         when (settings.leadingContent) {
             LeadingContent.COVER -> if (settings.coverVisible)
                 cover(canvas, artwork, x, y, size * settings.coverScale / 100f, palette.spectrum.rgb,
                     settings.coverVinylRing)
-            LeadingContent.SPECTRUM -> spectrum(canvas, bands, x, y, size, palette.spectrum.rgb)
+            LeadingContent.SPECTRUM -> if (settings.spectrumLayout != SpectrumLayout.NONE)
+                spectrum.drawSlot(canvas, settings, bands, palette, x, y, size)
             LeadingContent.NONE -> Unit
         }
     }
@@ -21,21 +25,18 @@ internal class IslandGpuSides(private val resources: IslandGpuResources) {
     fun trailing(canvas: Canvas, settings: IslandSettings, snapshot: PlaybackSnapshot, bands: FloatArray,
                  x: Float, y: Float, size: Float, palette: IslandPalette, animate: Boolean) {
         when (settings.trailingContent) {
-            TrailingContent.SPECTRUM -> spectrum(canvas, bands, x, y, size, palette.spectrum.rgb)
+            TrailingContent.SPECTRUM -> if (settings.spectrumLayout == SpectrumLayout.RIGHT_BARS ||
+                settings.spectrumLayout == SpectrumLayout.RIGHT_FIVE)
+                spectrum.drawSlot(canvas, settings, bands, palette, x, y, size)
             TrailingContent.STATUS -> status(canvas, snapshot, x, y, animate)
+            TrailingContent.CLOCK -> clock.draw(canvas, settings, x, y, size, palette.spectrum.rgb)
             TrailingContent.NONE -> Unit
         }
     }
 
-    private fun spectrum(canvas: Canvas, bands: FloatArray, x: Float, y: Float, size: Float, color: Int) {
-        val scale = size / 32f
-        val barWidth = 3f * scale
-        for (index in 0 until 4) {
-            val barHeight = 2f * scale + bands.getOrElse(index) { 0f }.coerceIn(0f, 1f) * (size - 2f * scale)
-            canvas.drawRRect(RRect.makeXYWH(x - 11f * scale + index * 6f * scale, y - barHeight / 2f,
-                barWidth, barHeight, 3f * scale), resources.fill(color))
-        }
-    }
+    fun bottom(canvas: Canvas, settings: IslandSettings, bands: FloatArray, palette: IslandPalette,
+               width: Float, height: Float) =
+        spectrum.drawBottom(canvas, settings, bands, palette, width, height)
 
     private fun cover(canvas: Canvas, artwork: CoverArtwork?, x: Float, y: Float, size: Float,
                       color: Int, vinylRing: Boolean) {

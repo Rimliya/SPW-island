@@ -109,6 +109,8 @@ fun main() {
         check(premultiplied(compatibility)) { "Compatibility pixels are not premultiplied" }
         SpoutPresentation().apply { advance(settings, snap, FloatArray(4), .1, true); close() }
         check(IslandVisualColors.parseHex("#D04060")?.rgb == 0xD04060)
+        check(IslandVisualColors.fiveBands(floatArrayOf(0f, 1f, .5f, 0f)).contentEquals(
+            floatArrayOf(0f, .75f, .75f, .375f, 0f)))
         val paletteCover = CoverArtwork(4, 1, intArrayOf(0xffff3020.toInt(), 0xffff3020.toInt(),
             0xff2060ff.toInt(), 0xff2060ff.toInt()))
         check(CoverColorExtractor.palette(paletteCover).size >= 2) { "Cover palette did not preserve multiple families" }
@@ -118,6 +120,15 @@ fun main() {
                 "Background material missing from output: $material"
             }
         }
+        check(!plain.contentEquals(native(settings.copy(spectrumLayout = SpectrumLayout.BOTTOM,
+            spectrumColorMode = SpectrumColorMode.COVER_FLOW), timed))) { "Bottom spectrum missing from output" }
+        check(!plain.contentEquals(native(settings.copy(spectrumLayout = SpectrumLayout.RIGHT_FIVE,
+            spectrumStyle = SpectrumStyle.POLYLINE), timed))) { "Five-bar polyline missing from output" }
+        val dotClock = native(settings.copy(trailingContent = TrailingContent.CLOCK,
+            clockStyle = ClockStyle.DOT_MATRIX), timed)
+        val pixelClock = native(settings.copy(trailingContent = TrailingContent.CLOCK,
+            clockStyle = ClockStyle.PIXEL), timed)
+        check(dotClock.any { it != 0 } && !dotClock.contentEquals(pixelClock)) { "Clock styles missing from output" }
         check(!plain.contentEquals(native(settings.copy(leadingContent = LeadingContent.COVER,
             coverVinylRing = true), timed))) { "Cover vinyl ring missing from output" }
         SpoutRenderer().apply { render(settings, snap, FloatArray(4), .1); close() }
@@ -126,7 +137,8 @@ fun main() {
             "Closed renderers must stop lyric preparation"
         }
         println("PASS: desktop independence, alpha, premultiplication, karaoke, resize, notch, low performance, idle, " +
-            "background progress, cover colours, fixed width, materials, compatibility raster, renderer cleanup")
+            "background progress, cover colours, fixed width, materials, spectrum layouts, clocks, " +
+            "compatibility raster, renderer cleanup")
     }
 }
 

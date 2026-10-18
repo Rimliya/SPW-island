@@ -211,10 +211,10 @@
           "type": "list",
           "key": "trailing_content",
           "title": "右侧插槽",
-          "entries": ["播放状态", "频谱", "不显示"],
-          "entry_values": ["status", "spectrum", "none"],
+          "entries": ["播放状态", "频谱", "时钟", "不显示"],
+          "entry_values": ["status", "spectrum", "clock", "none"],
           "default_value": "spectrum",
-          "summary": "频谱使用经典四柱样式；播放状态在无歌词时显示等待或播放动画。"
+          "summary": "频谱只使用右侧四柱或右侧五柱布局；底部布局在歌词区底边绘制。"
         },
         {
           "type": "switch",
@@ -347,11 +347,64 @@
           "summary": "胶囊沿顶部、刘海沿底部显示细线；开始隐藏或展开控件时淡出，恢复稳定收起状态后淡入，低性能模式下关闭。"
         },
         {
+          "type": "list",
+          "key": "spectrum_layout",
+          "title": "频谱布局",
+          "entries": ["不显示", "右侧四柱", "右侧五柱", "底部频谱"],
+          "entry_values": ["none", "right_bars", "right_five", "bottom"],
+          "default_value": "right_bars",
+          "summary": "选择“不显示”会停止音频采集。右侧五柱由四频段插值得到。"
+        },
+        {
+          "type": "list",
+          "key": "spectrum_color_mode",
+          "title": "频谱取色",
+          "entries": ["手动颜色", "封面主色", "随音量", "封面流光", "封面碎色"],
+          "entry_values": ["manual", "cover", "volume", "cover_flow", "mosaic"],
+          "default_value": "cover"
+        },
+        {
+          "type": "edittext",
+          "key": "spectrum_manual_color",
+          "title": "手动频谱颜色（#RRGGBB）",
+          "default_value": "",
+          "summary": "仅在频谱取色选择“手动颜色”时使用；留空时使用封面主色。"
+        },
+        {
+          "type": "list",
+          "key": "spectrum_style",
+          "title": "频谱样式",
+          "entries": ["实心柱", "折线"],
+          "entry_values": ["solid", "polyline"],
+          "default_value": "solid"
+        },
+        {
           "type": "switch",
-          "key": "spectrum_cover_color",
-          "title": "频谱使用封面颜色",
-          "default_value": true,
-          "summary": "从本地音频内嵌封面或同目录 cover/folder 图片取色，无封面时使用默认颜色。"
+          "key": "spectrum_rounded",
+          "title": "频谱柱圆角",
+          "default_value": true
+        },
+        {
+          "type": "seekbar",
+          "key": "spectrum_opacity",
+          "title": "频谱不透明度 %",
+          "default_value": 100,
+          "min": 20,
+          "max": 100
+        },
+        {
+          "type": "switch",
+          "key": "clock_24h",
+          "title": "时钟使用 24 小时制",
+          "default_value": true
+        },
+        {
+          "type": "list",
+          "key": "clock_style",
+          "title": "时钟字形",
+          "entries": ["文本", "七段数码管", "点阵", "像素风"],
+          "entry_values": ["text", "seven", "dot", "pixel"],
+          "default_value": "dot"
         },
         {
           "type": "switch",

@@ -42,6 +42,14 @@ data class IslandSettings(
     val fixedWidth: Boolean = false,
     val leadingContent: LeadingContent = LeadingContent.COVER,
     val trailingContent: TrailingContent = TrailingContent.SPECTRUM,
+    val spectrumLayout: SpectrumLayout = SpectrumLayout.RIGHT_BARS,
+    val spectrumColorMode: SpectrumColorMode = SpectrumColorMode.COVER,
+    val spectrumManualColor: String = "",
+    val spectrumStyle: SpectrumStyle = SpectrumStyle.SOLID,
+    val spectrumRounded: Boolean = true,
+    val spectrumOpacity: Int = 100,
+    val clock24Hour: Boolean = true,
+    val clockStyle: ClockStyle = ClockStyle.DOT_MATRIX,
     val backgroundMaterial: BackgroundMaterial = BackgroundMaterial.SOLID,
     val gradientAngle: Int = 135,
     val gradientStartColor: String = "",
@@ -71,9 +79,8 @@ data class IslandSettings(
     val showsSides: Boolean
         get() = leadingContent != LeadingContent.NONE || trailingContent != TrailingContent.NONE
 
-    /** Audio capture and spectrum drawing are active while either slot shows the spectrum. */
-    val showsSpectrum: Boolean
-        get() = leadingContent == LeadingContent.SPECTRUM || trailingContent == TrailingContent.SPECTRUM
+    /** Audio capture and spectrum drawing are active for any layout except "none". */
+    val showsSpectrum: Boolean get() = spectrumLayout != SpectrumLayout.NONE
 }
 
 interface SettingsStore {
