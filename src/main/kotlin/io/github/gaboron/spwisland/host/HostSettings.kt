@@ -91,7 +91,6 @@ class HostSettings(private val manager: ConfigManager, private val changed: () -
         mosaicBlock = number("mosaic_block", 16, 4, 64),
         coverVisible = config.get("cover_visible", true),
         coverScale = number("cover_scale", 100, 40, 160),
-        coverVinylRing = config.get("cover_vinyl", false),
         fontFamily = config.get("font_family", DEFAULT_LYRIC_FONT_FAMILY).take(100).trim(),
         fontWeight = LyricFontWeight.fromStorage(
             config.get<Any>("font_weight", "400").toString().toDoubleOrNull()?.toInt()?.toString() ?: "400"

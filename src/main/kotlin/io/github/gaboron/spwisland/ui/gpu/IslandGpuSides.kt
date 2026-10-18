@@ -14,8 +14,7 @@ internal class IslandGpuSides(private val resources: IslandGpuResources) {
                 x: Float, y: Float, size: Float, palette: IslandPalette) {
         when (settings.leadingContent) {
             LeadingContent.COVER -> if (settings.coverVisible)
-                cover(canvas, artwork, x, y, size * settings.coverScale / 100f, palette.spectrum.rgb,
-                    settings.coverVinylRing)
+                cover(canvas, artwork, x, y, size * settings.coverScale / 100f, palette.spectrum.rgb)
             LeadingContent.SPECTRUM -> if (settings.spectrumLayout != SpectrumLayout.NONE)
                 spectrum.drawSlot(canvas, settings, bands, palette, x, y, size)
             LeadingContent.NONE -> Unit
@@ -39,14 +38,8 @@ internal class IslandGpuSides(private val resources: IslandGpuResources) {
         spectrum.drawBottom(canvas, settings, bands, palette, width, height)
 
     private fun cover(canvas: Canvas, artwork: CoverArtwork?, x: Float, y: Float, size: Float,
-                      color: Int, vinylRing: Boolean) {
+                      color: Int) {
         val scale = size / 32f
-        if (vinylRing) {
-            val radius = size * .62f
-            canvas.drawCircle(x, y, radius, resources.fill(0x9608090c.toInt()))
-            canvas.drawCircle(x, y, radius, resources.stroke(0x18ffffff, 1f))
-            canvas.drawCircle(x, y, radius * .82f, resources.stroke(0x12ffffff, 1f))
-        }
         val bounds = Rect.makeXYWH(x - size / 2, y - size / 2, size, size)
         val shape = RRect.makeXYWH(bounds.left, bounds.top, size, size, 4.5f * scale)
         if (artwork == null) {
