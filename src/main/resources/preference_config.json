@@ -231,13 +231,6 @@
           "max": 160
         },
         {
-          "type": "switch",
-          "key": "cover_vinyl",
-          "title": "封面黑胶环",
-          "default_value": false,
-          "summary": "在封面后绘制深色唱片环与细纹。"
-        },
-        {
           "type": "list",
           "key": "background_style",
           "title": "背景样式（Windows）",

@@ -50,7 +50,6 @@ data class IslandSettings(
     val mosaicBlock: Int = 16,
     val coverVisible: Boolean = true,
     val coverScale: Int = 100,
-    val coverVinylRing: Boolean = false,
     val fontFamily: String = DEFAULT_LYRIC_FONT_FAMILY,
     val fontWeight: LyricFontWeight = LyricFontWeight.REGULAR,
     val fontSize: Int = 22,

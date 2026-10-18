@@ -65,6 +65,5 @@ private fun IslandSettings.withSetting(key: String, value: Any): IslandSettings 
     "mosaic_block" -> copy(mosaicBlock = value.toString().toIntOrNull() ?: mosaicBlock)
     "cover_visible" -> copy(coverVisible = value as Boolean)
     "cover_scale" -> copy(coverScale = value.toString().toIntOrNull() ?: coverScale)
-    "cover_vinyl" -> copy(coverVinylRing = value as Boolean)
     else -> this
 }
