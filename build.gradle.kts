@@ -26,8 +26,8 @@ dependencies {
     compileOnly(kotlin("stdlib"))
     compileOnly(workshop) { isTransitive = false }
     compileOnly("org.pf4j:pf4j:3.12.0")
-    implementation("net.java.dev.jna:jna:5.17.0")
-    implementation("net.java.dev.jna:jna-platform:5.17.0")
+    compileOnly("net.java.dev.jna:jna:5.17.0")
+    compileOnly("net.java.dev.jna:jna-platform:5.17.0")
     implementation("net.jthink:jaudiotagger:3.0.1")
     implementation("com.google.code.gson:gson:2.11.0")
     implementation("org.jetbrains.compose.desktop:desktop-jvm:1.12.1")
@@ -55,6 +55,10 @@ tasks.register<JavaExec>("spoutLifecycle") {
     dependsOn(tasks.testClasses)
     classpath = sourceSets.test.get().runtimeClasspath
     mainClass.set("io.github.gaboron.spwisland.ui.SpoutLifecycle")
+}
+configurations.named("runtimeClasspath") {
+    // SPW owns JNA and its native dispatcher; do not leave duplicate JARs in the update directory.
+    exclude(group = "net.java.dev.jna")
 }
 val gnomePointer = tasks.register<Zip>("gnomePointer") {
     archiveFileName.set("spw-island-pointer@gaboron.github.io.shell-extension.zip")

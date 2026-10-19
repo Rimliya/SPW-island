@@ -28,7 +28,8 @@ class IslandWindow(private val timeline: PlaybackSource, private val store: Sett
                    actions: PlaybackActions, private val report: (Throwable) -> Unit,
                    private val spectrum: () -> FloatArray = { FloatArray(4) },
                    private val spectrumFallback: () -> Boolean = { false },
-                   private val spectrumStatus: () -> String = { "" }) : AutoCloseable {
+                   private val spectrumStatus: () -> String = { "" },
+                   private val menuActions: IslandMenuActions? = null) : AutoCloseable {
     companion object {
         private const val HOVER_MARGIN = 18
     }
@@ -63,7 +64,7 @@ class IslandWindow(private val timeline: PlaybackSource, private val store: Sett
     private val pointerPresence = if (Platform.isLinux()) IslandPointerPresence(window) else null
     private val globalPointer = if (Platform.isLinux()) LinuxGlobalPointer() else null
     private val stableTranslucentCanvas = Platform.isWindows() || window.graphicsConfiguration.isTranslucencyCapable
-    private val menu = IslandMenu(store, report, window) {
+    private val menu = IslandMenu(store, report, window, menuActions) {
         IslandRuntimeStatus.describe(store.read(), timeline.snapshot(), window.isVisible,
             surface.hoverPose.reveal < .01, fullscreen, inputRegion != null || native.supportsClickThrough && nativeAvailable,
             if (globalPointer != null) globalPointer.location() != null else
@@ -213,6 +214,7 @@ class IslandWindow(private val timeline: PlaybackSource, private val store: Sett
         // Before the desktop visibility early return: hidden, paused or full-screen policies do not stop OBS output.
         spout?.tick(settings, snap, levels, now)
         if (!visible) {
+            panel.expanded = false
             // Avoid changing the native bounds or painting while the transparent peer is hidden.
             if (window.isVisible) window.isVisible = false
             if (!settings.enabled && !buffersReleased) {

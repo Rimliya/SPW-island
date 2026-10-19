@@ -44,6 +44,7 @@ private fun IslandSettings.withSetting(key: String, value: Any): IslandSettings 
     "hide_fullscreen" -> copy(hideFullscreen = value as Boolean)
     "click_through" -> copy(clickThrough = value as Boolean)
     "auto_hide_on_hover" -> copy(autoHideOnHover = value as Boolean)
+    "scroll_volume" -> copy(scrollVolume = value as Boolean)
     "reduced_motion" -> copy(lowPerformance = value as Boolean)
     "shape" -> copy(shape = IslandShape.fromStorage(value.toString()))
     "squircle" -> copy(squircle = value as Boolean)
