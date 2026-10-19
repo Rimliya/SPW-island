@@ -26,6 +26,7 @@ data class IslandSettings(
     val hideFullscreen: Boolean = true,
     val clickThrough: Boolean = false,
     val autoHideOnHover: Boolean = false,
+    val scrollVolume: Boolean = false,
     val lowPerformance: Boolean = false,
     val shape: IslandShape = IslandShape.ROUNDED_RECTANGLE,
     val squircle: Boolean = true,

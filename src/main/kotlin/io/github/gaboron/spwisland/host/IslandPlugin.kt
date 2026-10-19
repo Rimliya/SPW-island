@@ -3,11 +3,14 @@ package io.github.gaboron.spwisland.host
 
 import com.xuncorp.spw.workshop.api.PluginContext
 import com.xuncorp.spw.workshop.api.SpwPlugin
+import io.github.gaboron.spwisland.ui.IslandMenuActions
 
 open class IslandPlugin(context: PluginContext) : SpwPlugin(context) {
+    protected open fun menuActions(): IslandMenuActions? = null
+
     open override fun start() {
         if (runtime != null) return
-        val created = IslandRuntime()
+        val created = IslandRuntime(menuActions())
         runtime = created
         try {
             created.start()

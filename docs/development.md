@@ -376,12 +376,14 @@ Windows 和 Linux 共用 `preference_config.json`，平台专属设置在名称�
 | --- | --- |
 | `WorkshopTrackMetadata.kt` | 封装公开的当前曲目、时长、内嵌封面和读取权限查询，转换为核心模型 |
 | `IslandShortcut.kt` | 在插件 start 线程注册 SPW 管理的显示快捷键，管理权限与注销句柄 |
+| `HostVolumeControl.kt` | 按需绑定 SPW 内部音量读写接口，在宿主 EDT 同步播放器、界面和保存值并回传实际音量；不轮询 |
 | `HostSettings.kt` | 适配 `SettingsStore`，负责配置同步、合并、保存重试和旧配置迁移 |
 | `IslandConfigFile.kt` | 解析同一次读取的完整 JSON 快照，拒绝空/部分内容，检查新编辑并原子保存 |
 | `IslandConfigWatch.kt` | 文件事件与宿主通知合并、短时读取重试和低频兜底检查 |
 | `IslandPlaybackExtension.kt` | 接收 SPW `PlaybackExtensionPoint` 回调并转换为项目自己的模型 |
 | `IslandPlugin.kt` | PF4J 插件生命周期；创建和释放唯一的 `IslandRuntime`，并提供配置页按钮入口 |
 | `IslandRuntime.kt` | 宿主侧组合根；组装时间轴、设置、元数据、频谱、窗口、平台远程 UI 和播放操作 |
+| `IslandUiLifecycle.kt` | 异步投递窗口创建、操作和销毁；取消停用后的待执行启动，避免持有宿主插件管理锁时等待 EDT |
 | `PlaybackCallbackBridge.kt` | 暂存运行实例建立之前到达的播放回调，并在 runtime 就绪后转交 |
 | `TrackMetadataLoader.kt` | 单个有界后台线程恢复当前曲目、查询宿主元数据并补充本地信息；旧结果通过代次检查丢弃 |
 
@@ -401,6 +403,7 @@ Windows 和 Linux 共用 `preference_config.json`，平台专属设置在名称�
 | 文件 | 职责 |
 | --- | --- |
 | `WindowsOverlay.kt` | Windows 覆盖窗口能力：鼠标穿透、置顶强化和前台全屏判断 |
+| `WindowsNativeResources.kt` | 按插件类加载器提取并复用原生 DLL、辅助程序和配套数据的临时副本，避免占用插件安装目录 |
 | `SystemTheme.kt` | 读取 Windows 应用深浅色主题 |
 | `DotNetFrameworkRuntime.kt` | 在启动实时频谱 helper 前静默检查所需 .NET Framework CLR |
 
@@ -425,6 +428,7 @@ Windows 和 Linux 共用 `preference_config.json`，平台专属设置在名称�
 | 文件 | 职责 |
 | --- | --- |
 | `LinuxHelper.kt` | 提取并启动 Linux Python helper，并为独立界面 JVM 构造 classpath |
+| `src/linux/resources/native/island-dbus-tray.py` | GTK 缺失时通过 GIO 提供 StatusNotifierItem / DBusMenu；按管道和总线事件更新，图标以 ARGB 像素传输 |
 | `LinuxGlobalPointer.kt` | 提供 X11 指针查询，管理 KWin / GNOME 指针桥接及样本有效期 |
 
 平台功能不要直接加入 `core/`。
@@ -434,7 +438,8 @@ Windows 和 Linux 共用 `preference_config.json`，平台专属设置在名称�
 | 文件 | 职责 |
 | --- | --- |
 | `RemoteSettingsStore.kt` | 即时应用 Linux 菜单与位置操作，宿主确认后移除待确认编辑 |
-| `IslandWire.kt` | 定义 `IslandState`、`IslandCommand` 和 `IslandSpectrum`，以及子进程使用的 `RemotePlayback` 与 `RemoteSpectrum` |
+| `IslandWire.kt` | 定义状态、命令、频谱与音量结果消息，以及子进程使用的 `RemotePlayback` 与 `RemoteSpectrum` |
+| `RemoteVolumeControl.kt` | 发送滚轮增量与拖动绝对音量命令，按请求 ID 将最新宿主结果交回界面 |
 | `LinuxIslandProcess.kt` | 宿主侧独立界面进程管理；发送播放、设置和频谱状态，接收并确认播放/seek/设置等命令 |
 | `LinuxIslandMain.kt` | Linux 子 JVM 入口；接收状态、创建 `IslandWindow` 并把用户操作传回宿主 |
 
@@ -465,11 +470,11 @@ Windows 和 Linux 共用 `preference_config.json`，平台专属设置在名称�
 | `gpu/SwingGlassContent.kt` | 仅在控件内容变化时更新 Swing 内容图像，与桌面背景刷新分开 |
 | `gpu/SwingGlassInput.kt` | 将原生输入窗口的鼠标事件转给原有按钮、拖动与滚动逻辑，观察键盘和焦点变化 |
 | `gpu/IslandGpuSides.kt` | 原生封面、频谱和播放状态 |
-| `gpu/IslandGpuControls.kt` | 原生控制图标、歌曲信息和可拖动进度的呈现 |
+| `gpu/IslandGpuControls.kt` | 原生控制图标、歌曲信息、可拖动进度和音量条过渡的呈现 |
 | `gpu/IslandGpuResources.kt` | 有界原生路径与封面缓存、复用画笔和透明图层资源 |
 | `IslandLyricPresentation.kt` | GPU 与兼容绘制共用的行位置、换行透明度和缩放 |
 | `LyricTextPlacement.kt` | 共用的逐字边界、双向 caret、居中与滚动计算 |
-| `gpu/IslandGpuInput.kt` | 将原生输入转给已有按钮、进度和拖动逻辑，保留拖动捕获 |
+| `gpu/IslandGpuInput.kt` | 将原生输入转给已有按钮、进度、拖动和滚轮逻辑，保留拖动捕获 |
 | `platform/WindowsGpuInput.kt` | 独立的非聚焦输入窗口；轮廓外穿透，不裁切 GPU 画面 |
 | `platform/WindowsDesktopBackdrop.kt` | JNA 接口、共享纹理或 Skia Data 帧快照、新帧重绘通知、状态与异步释放 |
 | `platform/WindowsGpuTextureImport.kt` | 获取实际 Skiko Direct3D 上下文及绘制锁，将共享 D3D12 资源快照为 GPU Image |
@@ -587,7 +592,8 @@ LyricPainter
 | `IslandPalette.kt` | 根据默认配色、设置和封面多色调色板生成歌词、背景和频谱颜色 |
 | `IslandBackgroundProgress.kt` | 在词岛背景中绘制整曲播放进度，包括注水和边缘细线；细线位于胶囊顶部或刘海底部 |
 | `IslandProgressTransition.kt` | 背景进度的非线性淡入淡出和退出样式保留；独立状态由窗口帧更新，绘制不推进动画 |
-| `PlaybackProgress.kt` | 展开状态下的播放进度条和 seek 手势；松手时一次提交，并防止切歌后误 seek |
+| `PlaybackProgress.kt` | 共用的进度 / 音量呈现、悬停命中与鼠标手势；音量反馈期间点击 / 拖动调音量，播放进度仍在松手时一次提交并防止切歌后误 seek |
+| `IslandVolumeFeedback.kt` | 音量反馈的悬停保持、拖动预览与请求合并、2 秒超时和连续过渡；收起复位并按代次拒绝迟到结果 |
 | `PlaybackIcon.kt` | 与字体无关的上一首、播放、暂停和下一首矢量图标 |
 | `SyntheticSpectrum.kt` | 无需音频捕获的低成本模拟频谱 |
 
@@ -613,7 +619,7 @@ PopupMenuEntry
 | `PopupMenuEntry.kt` | 菜单标题、说明、分隔线、开关和操作项的通用数据模型 |
 | `LightweightPopupMenu.kt` | 非 Linux 平台使用的进程内自绘弹出菜单 |
 | `WindowsTray.kt` / `native/Tray.cs` | Windows 独立托盘程序的生命周期与图标事件转发；菜单仍在插件进程内 |
-| `GtkTray.kt` | Linux 原生 GTK 托盘及其菜单同步 |
+| `GtkTray.kt` | Linux 托盘进程及菜单同步；GTK 缺失时使用 GIO / D-Bus，托盘失败不阻断词岛 |
 | `AboutDialog.kt` | 组合分组状态与版权卡片；按文本实际宽度计算高度，窄屏或长说明可滚动 |
 | `AboutStatusPanel.kt` | 分组排版、主状态层级、自动换行与异常原因展示 |
 | `AboutText.kt` | 关于页共用的宽度测量接口和不可编辑换行文本 |
@@ -692,7 +698,9 @@ IslandLeadingContent / IslandTrailingContent
 
 优先加载 GTK 3；库名查找失败时尝试常见 Linux x64 系统库目录，GTK 3 不可加载时尝试 GTK 2。优先使用匹配 GTK 版本的 AppIndicator 创建持久托盘，不可用时回退到 GTK StatusIcon。查找限于进程可见的文件系统，不从 `/run/host` 混入其他运行环境的库。
 
-菜单数据来自 `GtkTray`。
+两版 GTK 均不可加载时，交给 `island-dbus-tray.py`，通过 `libgio-2.0.so.0` 注册 `org.kde.StatusNotifierItem` 与 `com.canonical.dbusmenu`。桌面负责绘制菜单；图标使用网络字节序的 ARGB 像素，避免依赖桌面能否读取容器中的临时路径。桌面托盘服务重启后重新注册，管道关闭后退出；GTK 与 D-Bus 均失败时保留两边的错误。
+
+菜单数据来自 `GtkTray`。D-Bus 路径按管道和总线事件更新，不新增轮询；标准和低性能模式共用此路径并保留菜单操作。
 
 GTK 与 Swing/AWT 不在同一个 JVM 中初始化，以减少线程和桌面工具包冲突。
 
@@ -971,6 +979,10 @@ IslandWindow
 
 播放命令最终由 `PlaybackActions` 回到 `IslandRuntime` 或 Linux IPC。
 
+`scroll_volume` 默认为 `false`。`IslandVolumeFeedback` 仅在正常交互且控件展开时接收滚轮，按每格 2% 发送增量。音量条未完全消失时，悬停或拖动会保持显示，移开后重新计时 2 秒。点击 / 拖动使用绝对音量，立即预览并按窗口帧时钟合并宿主请求，松手时提交最终值；拖动捕获由现有 GPU / Swing 输入路径保留，拖动期间保持词岛展开。低性能模式沿用 `PerformanceProfile` 的低帧率降低请求频率，并通过 `animateLayout` 直接切换样式。
+
+进度填充、时间 / 音量标签在 GPU 与 Java2D 路径共用呈现数据；收起或隐藏时立即取消音量手势并复位，拒绝该次展开中尚未返回的结果。Linux 使用 `volume` / `set_volume` 命令分别传递增量 / 绝对值，通过 `IslandVolumeResult` 返回实际音量；复用现有发送线程，不增加后台轮询。
+
 ### 修改设置
 
 通常同时查看：
@@ -1027,6 +1039,7 @@ Linux：
 GtkTray
 LinuxHelper
 island-linux.py
+island-dbus-tray.py（GTK 缺失时）
 ```
 
 ### 修改 Linux 独立界面进程
@@ -1193,6 +1206,8 @@ IslandRuntime
 
 宿主对象仅在 `host/` 内使用，不传播到 `core/`。
 
+dev23 尚无公开音量 API。`HostVolumeControl` 使用宿主类加载器按确切签名绑定 SPW 1.19 的 `AppConfig.getVolume()` / `updateVolume(float)`、`PlaybackController.changeVolume(float)` 与 `Spkv.encode(String, float)`，在宿主 EDT 同步界面、播放器和保存值。音量反馈由词岛自身呈现。绑定仅在首次音量操作发生，读写由滚轮和点击 / 拖动触发；到达音量边界时不重复写入。不扫描类、不修改方法；绑定或调用失败时返回空结果，每个插件生命周期最多提示一次。宿主版本更新后应重新确认此内部接入路径。
+
 ---
 
 ## 8. 线程与生命周期
@@ -1223,6 +1238,10 @@ Windows 的：
 - 关于窗口；
 
 都应在 EDT 上操作。
+
+宿主调用插件生命周期方法时可能持有插件管理锁。`IslandUiLifecycle` 将 Windows 窗口创建和销毁异步投递到 EDT，生命周期线程不使用 `invokeAndWait`；停用先取消待执行的启动，已开始创建的窗口完成后立即释放。字体窗口也拒绝停用后的待执行打开操作。后台资源逐项关闭，一项失败仍继续释放其余资源。
+
+Windows 原生 DLL、托盘程序、音频辅助程序和 ICU 数据由 `WindowsNativeResources` 按需复制到临时运行目录；同一插件类加载器复用副本，新类加载器使用独立目录。已加载的 DLL 可以存活到 JVM 退出，因此不直接从可替换的插件安装目录加载。两种性能模式共用该按需提取路径，不增加轮询或持续后台任务。
 
 不要在绘制函数中执行：
 
@@ -1261,7 +1280,7 @@ SPW JVM
 Linux IPC 后台线程
 独立界面 JVM
 独立界面 Swing EDT
-GTK helper 进程
+托盘 helper 进程（GTK 或 GIO / D-Bus）
 PipeWire 频谱 helper 进程（捕获启用时）
 KWin / GNOME 指针 helper 进程（Wayland 悬停隐藏启用时）
 ```
@@ -1446,10 +1465,10 @@ SPW 提供：
 - Kotlin 标准库；
 - PF4J。
 
+JNA 与 JNA Platform 也复用 SPW 自带版本，不重复装入插件的 `lib/`。Linux 独立界面的 classpath 会加入 `Native` 和 `X11` 所在的宿主归档；当前 SPW 1.19 提供的 JNA 5.19.1 可运行插件使用的 5.17.0 API。
+
 插件自身分发：
 
-- JNA；
-- JNA Platform；
 - Jaudiotagger；
 - Gson（配置快照解析）；
 - Windows 字体窗口使用的 Compose 运行库；

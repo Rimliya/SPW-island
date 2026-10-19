@@ -6,7 +6,8 @@ import io.github.gaboron.spwisland.core.SettingsStore
 /** Owns the shared menu model and translates native selections into plugin settings operations. */
 internal class IslandMenuCommands(
     private val store: SettingsStore,
-    private val showAbout: () -> Unit
+    private val showAbout: () -> Unit,
+    private val actions: IslandMenuActions? = null,
 ) {
     fun entries(): List<PopupMenuEntry> {
         val value = store.read()
@@ -18,6 +19,10 @@ internal class IslandMenuCommands(
             }
             add(toggle(LOW_PERFORMANCE, "低性能模式", value.lowPerformance))
             if (Platform.isWindows()) add(toggle(SPOUT, "Spout2 输出", value.spout.enabled))
+            if (actions?.canDisableCurrentLyrics() == true) {
+                add(separator())
+                add(action(DISABLE_CURRENT_LYRICS, "禁用当前获取的逐字歌词"))
+            }
             add(separator())
             add(action(RECOVER, "找回词岛"))
             add(action(RESET_POSITION, "重置位置"))
@@ -38,6 +43,7 @@ internal class IslandMenuCommands(
             }
             AUTO_HIDE -> store.set("auto_hide_on_hover", !value.autoHideOnHover)
             ENABLED -> store.set("enabled", !value.enabled)
+            DISABLE_CURRENT_LYRICS -> actions?.disableCurrentLyrics()
             RECOVER -> { store.set("auto_hide_on_hover", false); store.set("click_through", false); store.set("enabled", true) }
             RESET_POSITION -> store.resetPosition()
             ABOUT -> showAbout()
@@ -58,5 +64,6 @@ internal class IslandMenuCommands(
         const val RECOVER = 201
         const val RESET_POSITION = 202
         const val ABOUT = 203
+        const val DISABLE_CURRENT_LYRICS = 204
     }
 }
