@@ -82,7 +82,8 @@ class IslandPanel(private val actions: PlaybackActions, report: (Throwable) -> U
         addMouseWheelListener { event ->
             val point = SwingUtilities.convertPoint(event.component, event.point, this)
             if (volumeInteractive() && !progress.dragging &&
-                IslandGeometry.silhouette(width, height, settings.notch, settings.cornerRoundness).contains(point) &&
+                IslandGeometry.silhouette(width, height, settings.shape, settings.cornerRoundness,
+                    settings.squircle).contains(point) &&
                 volumeFeedback.scroll(event.preciseWheelRotation)) event.consume()
         }
     }
