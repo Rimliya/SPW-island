@@ -36,6 +36,7 @@ dependencies {
     runtimeOnly("org.jetbrains.skiko:skiko-awt-runtime-linux-x64:$skikoVersion")
     metadataSources("net.jthink:jaudiotagger:3.0.1:sources")
     testImplementation(kotlin("stdlib"))
+    testImplementation("net.java.dev.jna:jna:5.17.0")
 }
 
 // Spout2 verification entry points (Windows; spoutChecks runs headless on CI).
