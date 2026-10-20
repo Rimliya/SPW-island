@@ -38,6 +38,12 @@ class WindowsOverlay {
         error("无法维持词岛置顶：$error")
     }
 
+    fun isWindowVisible(window: Window): Boolean {
+        val api = user32 ?: return true
+        val hwnd = existingHandle(window, api) ?: return false
+        return api.IsWindowVisible(hwnd)
+    }
+
     fun clickThrough(window: Window, enabled: Boolean) {
         val api = user32 ?: return
         if (!window.isDisplayable) return
