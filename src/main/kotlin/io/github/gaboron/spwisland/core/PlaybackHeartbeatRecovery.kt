@@ -22,14 +22,8 @@ internal class PlaybackHeartbeatRecovery {
         if (!inferenceAllowed) previousPosition = null
     }
 
-    fun playingChanged(value: Boolean) {
-        if (value) playingSignalObserved = true else {
-            // SPW can report a default paused state while restoring a track at startup.
-            // Re-arm the heartbeat fallback instead of latching to that first signal;
-            // a real pause keeps the position frozen, so no forward step is inferred.
-            playingSignalObserved = false
-            previousPosition = null
-        }
+    fun playingChanged() {
+        playingSignalObserved = true
     }
 
     fun seeked() {
