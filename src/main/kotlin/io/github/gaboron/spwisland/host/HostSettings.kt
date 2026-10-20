@@ -8,6 +8,7 @@ import com.sun.jna.Platform
 import io.github.gaboron.spwisland.core.*
 import java.util.function.Consumer
 import java.nio.file.Files
+import java.nio.file.Path
 import kotlin.math.roundToInt
 
 class HostSettings(private val manager: ConfigManager, private val changed: () -> Unit) : SettingsStore, AutoCloseable {
@@ -31,6 +32,7 @@ class HostSettings(private val manager: ConfigManager, private val changed: () -
     }
 
     override fun read(): IslandSettings = synchronized(lock) { accepted ?: decode() }
+    fun performanceLogPath(): Path = config.getConfigPath().parent.resolve("island-performance.log")
     private fun migrateSettings() {
         // Native sliders use floating-point values. Persist whole-number settings as integers
         // so reopening SPW does not inherit noisy fractional values from the slider thumb.

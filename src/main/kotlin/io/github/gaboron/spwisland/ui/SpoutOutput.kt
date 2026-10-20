@@ -197,7 +197,7 @@ internal class SpoutOutput(private val report: (Throwable) -> Unit) : AutoClosea
             sampleFrames++
             if (now - sampleStart >= 10_000_000_000L) {
                 val samples = renderSamples.copyOf(minOf(sampleFrames.toInt(), renderSamples.size)).sorted()
-                println("[SPW Spout] fps=%.1f frames=%d dropped=%d mode=%s paintMaxMs=%.2f uploadMaxMs=%.2f renderP95Ms=%.2f".format(
+                IslandPerformanceLog.log("[SPW Spout] fps=%.1f frames=%d dropped=%d mode=%s paintMaxMs=%.2f uploadMaxMs=%.2f renderP95Ms=%.2f".format(
                     sampleFrames * 1e9 / (now - sampleStart), sender.sentFrames, sender.droppedFrames,
                     if (compatibility) "java2d" else "skia", sender.maxPaintNs / 1e6, sender.maxUploadNs / 1e6,
                     samples[(samples.size * .95).toInt().coerceAtMost(samples.lastIndex)] / 1e6))

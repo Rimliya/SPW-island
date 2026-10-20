@@ -13,6 +13,9 @@ import io.github.gaboron.spwisland.platform.SpectrumSource
 import io.github.gaboron.spwisland.ui.ComposeFontPickerWindow
 import com.sun.jna.Platform
 import io.github.gaboron.spwisland.remote.LinuxIslandProcess
+import io.github.gaboron.spwisland.ui.IslandPerformanceLog
+import java.nio.file.Files
+import java.nio.file.StandardOpenOption
 import javax.swing.SwingUtilities
 
 class IslandRuntime(private val menuActions: IslandMenuActions? = null) : AutoCloseable {
@@ -29,6 +32,16 @@ class IslandRuntime(private val menuActions: IslandMenuActions? = null) : AutoCl
     private val settings = HostSettings(WorkshopApi.manager.createConfigManager()) {
         updateSpectrumMode()
         if (!closed) ui?.reload()
+    }
+    init {
+        val logPath = settings.performanceLogPath()
+        IslandPerformanceLog.sink = { line ->
+            println(line)
+            runCatching {
+                Files.createDirectories(logPath.parent)
+                Files.writeString(logPath, line + "\n", StandardOpenOption.CREATE, StandardOpenOption.APPEND)
+            }
+        }
     }
     private val fontPicker = if (Platform.isWindows()) ComposeFontPickerWindow({ selection ->
         safely {

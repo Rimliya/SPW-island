@@ -43,7 +43,7 @@ internal class IslandFrameMetrics {
             val selectAvg = if (visibleFrames > 0L) selectTotalNs / visibleFrames / 1_000_000.0 else 0.0
             val layoutAvg = if (layoutFrames > 0L) layoutTotalNs / layoutFrames / 1_000_000.0 else 0.0
             val paintAvg = if (paintFrames > 0L) paintTotalNs / paintFrames / 1_000_000.0 else 0.0
-            println(String.format(Locale.ROOT,
+            IslandPerformanceLog.log(String.format(Locale.ROOT,
                 "[SPW Island] fps=%.1f visibleFps=%.1f playing=%.0f%% " +
                     "selectAvg=%.2fms selectMax=%.2fms layoutAvg=%.2fms layoutMax=%.2fms " +
                     "paintAvg=%.2fms paintMax=%.2fms",
