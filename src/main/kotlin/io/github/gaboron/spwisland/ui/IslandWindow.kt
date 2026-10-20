@@ -79,6 +79,8 @@ class IslandWindow(private val timeline: PlaybackSource, private val store: Sett
     private var fullscreen = false
     private var nextScreenCheck = 0L
     private var nextTopmostCheck = 0L
+    private var nextVisibilityCheck = 0L
+    private var nativeHiddenChecks = 0
     private var topmostAvailable = true
     private var lastFrame = System.nanoTime()
     private var lastLines: List<LyricLine> = emptyList()
@@ -231,7 +233,11 @@ class IslandWindow(private val timeline: PlaybackSource, private val store: Sett
             nextTopmostCheck = 0
             frameInterval = 200_000_000L
             frameMetrics.record(0L, 0L, 0L, visible = false, playing = snap.playing)
-            frameMetrics.maybeLog(System.nanoTime())
+            nativeHiddenChecks = 0
+            frameMetrics.maybeLog(System.nanoTime()) {
+                " status=${snap.status} track=${snap.track != null} line=${snap.line != null} " +
+                    "window=${window.isVisible} native=${native.isWindowVisible(window)}"
+            }
             return
         }
         buffersReleased = false
@@ -345,6 +351,20 @@ class IslandWindow(private val timeline: PlaybackSource, private val store: Sett
             window.isVisible = true
             nextTopmostCheck = 0
         }
+        if (Platform.isWindows() && now >= nextVisibilityCheck) {
+            nextVisibilityCheck = now + 2_000_000_000L
+            if (native.isWindowVisible(window)) {
+                nativeHiddenChecks = 0
+            } else if (++nativeHiddenChecks >= 2) {
+                // A long pause can leave the native peer hidden while AWT still reports visible.
+                nativeHiddenChecks = 0
+                IslandPerformanceLog.log("[SPW Island] native window hidden; forcing show")
+                window.isVisible = false
+                window.isVisible = true
+                nextTopmostCheck = 0
+                surface.repaint()
+            }
+        }
         if (topmostAvailable && now >= nextTopmostCheck) {
             try { native.reinforceTopmost(window) }
             catch (error: Exception) { topmostAvailable = false; report(error) }
@@ -365,7 +385,10 @@ class IslandWindow(private val timeline: PlaybackSource, private val store: Sett
         } else surface.repaint()
         val paintNs = System.nanoTime() - paintStart
         frameMetrics.record(selectNs, layoutNs, paintNs, visible = true, playing = snap.playing)
-        frameMetrics.maybeLog(System.nanoTime())
+        frameMetrics.maybeLog(System.nanoTime()) {
+            " status=${snap.status} track=${snap.track != null} line=${snap.line != null} " +
+                "window=${window.isVisible} native=${native.isWindowVisible(window)}"
+        }
         val displayInterval = frameClock.interval(device, performance)
         frameInterval = when {
             press != null || !performance.animateLayout -> displayInterval

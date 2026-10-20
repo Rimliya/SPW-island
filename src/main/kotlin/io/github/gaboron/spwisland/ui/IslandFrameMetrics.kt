@@ -36,20 +36,21 @@ internal class IslandFrameMetrics {
         }
     }
 
-    fun maybeLog(now: Long) {
+    fun maybeLog(now: Long, context: () -> String = { "" }) {
         if (now - windowStart < 10_000_000_000L) return
         val elapsed = ((now - windowStart) / 1_000_000_000.0).coerceAtLeast(0.001)
         if (frames > 0L) {
             val selectAvg = if (visibleFrames > 0L) selectTotalNs / visibleFrames / 1_000_000.0 else 0.0
             val layoutAvg = if (layoutFrames > 0L) layoutTotalNs / layoutFrames / 1_000_000.0 else 0.0
             val paintAvg = if (paintFrames > 0L) paintTotalNs / paintFrames / 1_000_000.0 else 0.0
-            IslandPerformanceLog.log(String.format(Locale.ROOT,
+            val line = String.format(Locale.ROOT,
                 "[SPW Island] fps=%.1f visibleFps=%.1f playing=%.0f%% " +
                     "selectAvg=%.2fms selectMax=%.2fms layoutAvg=%.2fms layoutMax=%.2fms " +
                     "paintAvg=%.2fms paintMax=%.2fms",
                 frames / elapsed, visibleFrames / elapsed, playingFrames * 100.0 / frames,
                 selectAvg, selectMaxNs / 1_000_000.0, layoutAvg, layoutMaxNs / 1_000_000.0,
-                paintAvg, paintMaxNs / 1_000_000.0))
+                paintAvg, paintMaxNs / 1_000_000.0)
+            IslandPerformanceLog.log(line + context())
         }
         windowStart = now
         frames = 0L; visibleFrames = 0L; playingFrames = 0L
