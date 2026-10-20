@@ -85,7 +85,6 @@ class IslandWindow(private val timeline: PlaybackSource, private val store: Sett
     private var lastFrame = System.nanoTime()
     private var lastLines: List<LyricLine> = emptyList()
     private var previousSnapshot: PlaybackSnapshot? = null
-    private val frameMetrics = IslandFrameMetrics()
     private var width = 280.0
     private var height = 58.0
     private var lyricWidth = 280.0
@@ -232,12 +231,7 @@ class IslandWindow(private val timeline: PlaybackSource, private val store: Sett
             pointerPresence?.reset()
             nextTopmostCheck = 0
             frameInterval = 200_000_000L
-            frameMetrics.record(0L, 0L, 0L, visible = false, playing = snap.playing)
             nativeHiddenChecks = 0
-            frameMetrics.maybeLog(System.nanoTime()) {
-                " status=${snap.status} track=${snap.track != null} line=${snap.line != null} " +
-                    "window=${window.isVisible} native=${native.isWindowVisible(window)}"
-            }
             return
         }
         buffersReleased = false
@@ -271,9 +265,7 @@ class IslandWindow(private val timeline: PlaybackSource, private val store: Sett
             else -> overIsland
         }
         panel.expanded = !controlsBlocked && !clickThrough && (dragging || panel.progress.dragging || hoverActive)
-        val selectStart = System.nanoTime()
         val visibleLines = ActiveLyrics.select(snap, settings.experimentalMultiLine)
-        val selectNs = System.nanoTime() - selectStart
         if (visibleLines != lastLines || snap.track != previousSnapshot?.track) {
             panel.outgoing = previousSnapshot?.takeIf { it.track == snap.track }
             panel.transition = 0.0; lastLines = visibleLines
@@ -282,7 +274,6 @@ class IslandWindow(private val timeline: PlaybackSource, private val store: Sett
         panel.transition = if (performance.animateLayout) {
             (panel.transition + dt / .65).coerceAtMost(1.0)
         } else 1.0
-        val layoutStart = System.nanoTime()
         panel.prepareLyrics(visibleLines)
         val collapsed = panel.desiredSize(screen.width, false)
         val opened = panel.desiredSize(screen.width, true)
@@ -346,7 +337,6 @@ class IslandWindow(private val timeline: PlaybackSource, private val store: Sett
         panel.hoverSettled = surface.hoverPose.fullyShown
         panel.updateProgressTransition(dt)
         panel.doLayout()
-        val layoutNs = System.nanoTime() - layoutStart
         if (!window.isVisible) {
             window.isVisible = true
             nextTopmostCheck = 0
@@ -358,7 +348,6 @@ class IslandWindow(private val timeline: PlaybackSource, private val store: Sett
             } else if (++nativeHiddenChecks >= 2) {
                 // A long pause can leave the native peer hidden while AWT still reports visible.
                 nativeHiddenChecks = 0
-                IslandPerformanceLog.log("[SPW Island] native window hidden; forcing show")
                 window.isVisible = false
                 window.isVisible = true
                 nextTopmostCheck = 0
@@ -374,7 +363,6 @@ class IslandWindow(private val timeline: PlaybackSource, private val store: Sett
             try { native.clickThrough(window, clickThrough); clickThroughApplied = clickThrough }
             catch (error: Exception) { nativeAvailable = false; report(error) }
         }
-        val paintStart = System.nanoTime()
         if (renderer.active) renderer.draw()
         else if (Platform.isLinux()) {
             // The isolated Linux JVM uses XRender, and publishes one complete buffered frame.
@@ -383,12 +371,6 @@ class IslandWindow(private val timeline: PlaybackSource, private val store: Sett
                 try { window.paint(graphics) } finally { graphics.dispose() }
             }
         } else surface.repaint()
-        val paintNs = System.nanoTime() - paintStart
-        frameMetrics.record(selectNs, layoutNs, paintNs, visible = true, playing = snap.playing)
-        frameMetrics.maybeLog(System.nanoTime()) {
-            " status=${snap.status} track=${snap.track != null} line=${snap.line != null} " +
-                "window=${window.isVisible} native=${native.isWindowVisible(window)}"
-        }
         val displayInterval = frameClock.interval(device, performance)
         frameInterval = when {
             press != null || !performance.animateLayout -> displayInterval
