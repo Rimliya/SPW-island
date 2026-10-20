@@ -40,7 +40,7 @@ internal class IslandFrameMetrics {
         if (now - windowStart < 10_000_000_000L) return
         val elapsed = ((now - windowStart) / 1_000_000_000.0).coerceAtLeast(0.001)
         if (frames > 0L) {
-            val selectAvg = selectTotalNs / frames / 1_000_000.0
+            val selectAvg = if (visibleFrames > 0L) selectTotalNs / visibleFrames / 1_000_000.0 else 0.0
             val layoutAvg = if (layoutFrames > 0L) layoutTotalNs / layoutFrames / 1_000_000.0 else 0.0
             val paintAvg = if (paintFrames > 0L) paintTotalNs / paintFrames / 1_000_000.0 else 0.0
             println(String.format(Locale.ROOT,
