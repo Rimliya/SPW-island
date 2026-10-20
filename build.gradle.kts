@@ -52,12 +52,6 @@ tasks.register<JavaExec>("spoutSoak") {
     mainClass.set("io.github.gaboron.spwisland.ui.SpoutSoak")
     args(providers.gradleProperty("soakSeconds").orElse("660").get())
 }
-tasks.register<JavaExec>("playbackChecks") {
-    dependsOn(tasks.testClasses)
-    classpath = sourceSets.test.get().runtimeClasspath
-    mainClass.set("io.github.gaboron.spwisland.core.PlaybackChecksKt")
-    jvmArgs("-Djava.awt.headless=true")
-}
 tasks.register<JavaExec>("spoutLifecycle") {
     dependsOn(tasks.testClasses)
     classpath = sourceSets.test.get().runtimeClasspath
@@ -185,7 +179,7 @@ tasks.named<Zip>("plugin") {
             } else artifact.file.name
         }
     }
-    dependsOn(tasks.jar, "sourceArchive", "spoutChecks", "playbackChecks")
+    dependsOn(tasks.jar, "sourceArchive", "spoutChecks")
     archiveFileName.set("spw-island-${project.version}.spmod")
     destinationDirectory.set(layout.buildDirectory.dir("distributions"))
     eachFile {

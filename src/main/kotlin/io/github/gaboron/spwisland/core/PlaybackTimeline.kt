@@ -131,7 +131,7 @@ class PlaybackTimeline(private val nanoTime: () -> Long = System::nanoTime) : Pl
         val wasPlaying = playing
         position = currentPosition()
         anchor = nanoTime()
-        heartbeatRecovery.playingChanged(value)
+        heartbeatRecovery.playingChanged()
         rateTracker.discontinuity()
         playing = value
         if (value) {
