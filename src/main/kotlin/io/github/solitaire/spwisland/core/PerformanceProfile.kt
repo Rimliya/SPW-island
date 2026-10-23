@@ -1,0 +1,23 @@
+// SPDX-License-Identifier: GPL-3.0-only
+package io.github.solitaire.spwisland.core
+
+enum class SpectrumMode { LIVE, SYNTHETIC }
+
+/** Central performance budget for rendering, background work and optional host integration. */
+enum class PerformanceProfile(
+    val maxFrameRate: Int,
+    val animateLayout: Boolean,
+    val detailedKaraoke: Boolean,
+    val renderBackgroundProgress: Boolean,
+    val spectrumMode: SpectrumMode,
+    val screenCheckIntervalNs: Long,
+    val topmostCheckIntervalNs: Long,
+    val diagnosticSampleIntervalNs: Long,
+    val diagnosticStallTimeoutNs: Long
+) {
+    STANDARD(120, true, true, true, SpectrumMode.LIVE, 400_000_000L, 100_000_000L, 1_000_000_000L, 5_000_000_000L),
+    LOW(15, false, false, false, SpectrumMode.SYNTHETIC, 1_500_000_000L, 500_000_000L, 5_000_000_000L, 15_000_000_000L)
+}
+
+val IslandSettings.performance: PerformanceProfile
+    get() = if (lowPerformance) PerformanceProfile.LOW else PerformanceProfile.STANDARD

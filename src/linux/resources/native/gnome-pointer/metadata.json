@@ -1,5 +1,5 @@
 {
-  "uuid": "spw-island-pointer@gaboron.github.io",
+  "uuid": "spw-island-pointer@solitaire.github.io",
   "name": "SPW Island Pointer",
   "description": "为灵动词岛的悬停隐藏提供只读鼠标坐标。",
   "shell-version": ["45", "46", "47", "48", "49", "50"],

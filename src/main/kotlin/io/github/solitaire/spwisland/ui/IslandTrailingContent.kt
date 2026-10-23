@@ -1,0 +1,44 @@
+// SPDX-License-Identifier: GPL-3.0-only
+package io.github.solitaire.spwisland.ui
+
+import io.github.solitaire.spwisland.core.*
+import java.awt.Color
+import java.awt.Graphics2D
+import java.awt.geom.Ellipse2D
+import java.awt.geom.RoundRectangle2D
+import kotlin.math.sin
+
+/** Paints the trailing spectrum, clock or playback status. */
+internal object IslandTrailingContent {
+    fun draw(g: Graphics2D, settings: IslandSettings, snapshot: PlaybackSnapshot, bands: FloatArray,
+             centerX: Float, centerY: Float, size: Float, palette: IslandPalette, animate: Boolean) {
+        when (settings.trailingContent) {
+            TrailingContent.SPECTRUM -> if (settings.spectrumLayout == SpectrumLayout.RIGHT_BARS ||
+                settings.spectrumLayout == SpectrumLayout.RIGHT_FIVE)
+                IslandSpectrumPainter.drawSlot(g, settings, bands, palette, centerX, centerY, size)
+            TrailingContent.STATUS -> drawStatus(g, snapshot, centerX, centerY, animate)
+            TrailingContent.CLOCK ->
+                IslandClockPainter.draw(g, settings, centerX, centerY, size, palette.spectrum)
+            TrailingContent.NONE -> Unit
+        }
+    }
+
+    private fun drawStatus(g: Graphics2D, snapshot: PlaybackSnapshot, centerX: Float, centerY: Float,
+                           animate: Boolean) {
+        if (snapshot.line == null && snapshot.lyrics.isEmpty() && snapshot.playing) {
+            for (index in 0..2) {
+                val alpha = if (animate) (150 + 90 * sin(snapshot.positionMs / 350.0 - index)).toInt() else 150
+                g.color = Color(190, 204, 221, alpha)
+                g.fill(Ellipse2D.Float(centerX - 8f + index * 7f, centerY - 2f, 4f, 4f))
+            }
+        } else {
+            g.color = Color(115, 131, 149)
+            if (snapshot.playing) {
+                g.fill(Ellipse2D.Float(centerX - 3f, centerY - 3f, 6f, 6f))
+            } else {
+                g.fill(RoundRectangle2D.Float(centerX - 6f, centerY - 5f, 3f, 10f, 2f, 2f))
+                g.fill(RoundRectangle2D.Float(centerX, centerY - 5f, 3f, 10f, 2f, 2f))
+            }
+        }
+    }
+}

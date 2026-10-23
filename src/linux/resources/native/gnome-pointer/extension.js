@@ -2,7 +2,7 @@
 import Gio from 'gi://Gio';
 import {Extension} from 'resource:///org/gnome/shell/extensions/extension.js';
 
-const INTERFACE = `<node><interface name="io.github.gaboron.SpwIsland.Pointer">
+const INTERFACE = `<node><interface name="io.github.solitaire.SpwIsland.Pointer">
     <method name="GetPointer"><arg type="d" direction="out"/><arg type="d" direction="out"/></method>
 </interface></node>`;
 
