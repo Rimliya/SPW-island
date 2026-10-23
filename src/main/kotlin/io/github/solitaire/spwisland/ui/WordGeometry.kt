@@ -18,22 +18,36 @@ import io.github.solitaire.spwisland.core.Word
 object WordGeometry {
     data class Cluster(val bounds: Rectangle2D, val shape: Shape)
     data class Cell(val bounds: Rectangle2D, val clusters: List<Cluster>)
+    private var queueFullCount = 0L
+    private var lastQueueFullReport = 0L
+    private const val QUEUE_FULL_LOG_INTERVAL_NS = 60_000_000_000L
     private data class Key(val shaped: ShapedText, val words: List<Word>)
-    private val worker = DiagnosticExecutors.pool(1, 1, 30, TimeUnit.SECONDS, ArrayBlockingQueue(8),
+    private val worker = DiagnosticExecutors.pool(1, 1, 30, TimeUnit.SECONDS, ArrayBlockingQueue(32),
         { task -> Thread(task, "island-word-geometry").apply { isDaemon = true; uncaughtExceptionHandler = IslandLog.uncaught("WordGeometry") } },
         ThreadPoolExecutor.AbortPolicy()).apply { allowCoreThreadTimeOut(true) }
-    private val cache = object : LinkedHashMap<Key, CompletableFuture<List<Cell>>>(8, .75f, true) {
-        override fun removeEldestEntry(eldest: MutableMap.MutableEntry<Key, CompletableFuture<List<Cell>>>) = size > 8
+    private val cache = object : LinkedHashMap<Key, CompletableFuture<List<Cell>?>>(16, .75f, true) {
+        override fun removeEldestEntry(eldest: MutableMap.MutableEntry<Key, CompletableFuture<List<Cell>?>>) = size > 16
     }
 
     @Synchronized fun ready(shaped: ShapedText, text: String, words: List<Word>): List<Cell>? {
         val key = Key(shaped, words)
         val future = cache[key] ?: try {
-            CompletableFuture.supplyAsync({ prepare(shaped, text, words) }, worker).whenComplete { _, error ->
+            CompletableFuture.supplyAsync<List<Cell>?>({ prepare(shaped, text, words) }, worker).whenComplete { _, error ->
                 if (error != null) IslandLog.failure("lyrics", "geometry.failed", error)
             }.also { cache[key] = it }
-        } catch (error: java.util.concurrent.RejectedExecutionException) {
-            IslandLog.warn("lyrics", "geometry.queue_full"); return null
+        } catch (_: java.util.concurrent.RejectedExecutionException) {
+            // Cache the rejection so render frames do not submit and log the same line repeatedly.
+            val rejected = CompletableFuture<List<Cell>?>()
+            rejected.complete(null)
+            cache[key] = rejected
+            val now = System.nanoTime()
+            queueFullCount++
+            if (now - lastQueueFullReport >= QUEUE_FULL_LOG_INTERVAL_NS) {
+                IslandLog.warn("lyrics", "geometry.queue_full", mapOf("rejected" to queueFullCount))
+                queueFullCount = 0
+                lastQueueFullReport = now
+            }
+            return null
         }
         return if (future.isCompletedExceptionally) null else future.getNow(null)
     }

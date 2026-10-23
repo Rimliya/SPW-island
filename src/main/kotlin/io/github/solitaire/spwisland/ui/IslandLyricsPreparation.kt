@@ -67,7 +67,9 @@ internal class IslandLyricsPreparation(private val layouts: IslandLyricsLayout.C
         val infoFont = SystemUiFont.derive(Font.PLAIN, 12f)
         LyricTypography.shape(trackLabel(snapshot.track), infoFont)
         val reached = maxOf(snapshot.positionMs, snapshot.line?.startMs ?: 0L)
-        val lookAhead = if (settings.performance.animateLayout) 3 else 1
+        val detailedWordPrep = settings.karaoke && settings.performance.detailedKaraoke && snapshot.usesWordTiming
+        // Detailed glyph geometry is expensive; reserve look-ahead for lighter layouts.
+        val lookAhead = if (settings.performance.animateLayout && !detailedWordPrep) 3 else 1
         val upcoming = snapshot.lyrics.asSequence().filter { it.text.isNotBlank() && it.startMs > reached }
             .sortedWith(compareBy<LyricLine> { it.startMs }.thenBy { it.endMs })
             .take(lookAhead).toList()
