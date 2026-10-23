@@ -10,7 +10,7 @@ plugins {
     id("com.xuncorp.spw.workshop") version "0.1.0-dev23"
     `java-library`
 }
-group = "io.github.gaboron"
+group = "io.github.solitaire"
 java { toolchain { languageVersion.set(JavaLanguageVersion.of(25)) } }
 kotlin { compilerOptions {
     jvmTarget.set(JvmTarget.JVM_25)
@@ -43,26 +43,26 @@ dependencies {
 tasks.register<JavaExec>("spoutChecks") {
     dependsOn(tasks.testClasses)
     classpath = sourceSets.test.get().runtimeClasspath
-    mainClass.set("io.github.gaboron.spwisland.ui.SpoutChecksKt")
+    mainClass.set("io.github.solitaire.spwisland.ui.SpoutChecksKt")
     jvmArgs("-Djava.awt.headless=true")
 }
 tasks.register<JavaExec>("spoutSoak") {
     dependsOn(tasks.testClasses)
     classpath = sourceSets.test.get().runtimeClasspath
-    mainClass.set("io.github.gaboron.spwisland.ui.SpoutSoak")
+    mainClass.set("io.github.solitaire.spwisland.ui.SpoutSoak")
     args(providers.gradleProperty("soakSeconds").orElse("660").get())
 }
 tasks.register<JavaExec>("spoutLifecycle") {
     dependsOn(tasks.testClasses)
     classpath = sourceSets.test.get().runtimeClasspath
-    mainClass.set("io.github.gaboron.spwisland.ui.SpoutLifecycle")
+    mainClass.set("io.github.solitaire.spwisland.ui.SpoutLifecycle")
 }
 configurations.named("runtimeClasspath") {
     // SPW owns JNA and its native dispatcher; do not leave duplicate JARs in the update directory.
     exclude(group = "net.java.dev.jna")
 }
 val gnomePointer = tasks.register<Zip>("gnomePointer") {
-    archiveFileName.set("spw-island-pointer@gaboron.github.io.shell-extension.zip")
+    archiveFileName.set("spw-island-pointer@solitaire.github.io.shell-extension.zip")
     destinationDirectory.set(layout.buildDirectory.dir("distributions"))
     from("src/linux/resources/native/gnome-pointer")
     from("LICENSE")
@@ -88,11 +88,11 @@ tasks.processResources {
     filesMatching("project.properties") { expand("projectUrl" to projectUrl.get()) }
 }
 spmod {
-    PluginClass = "io.github.gaboron.spwisland.host.IslandPlugin"
-    PluginId = "io.github.gaboron.spwisland"
+    PluginClass = "io.github.solitaire.spwisland.host.IslandPlugin"
+    PluginId = "io.github.solitaire.spwisland"
     PluginName = "灵动词岛 for SPW"
     PluginVersion = project.version.toString()
-    PluginProvider = "GaBoron / Solitaire"
+    PluginProvider = "solitaire + 大肥鱼（感谢原作者 GaBoron）"
     PluginDescription = "SPW lyrics island; concept by Lyricify / WXRIW (CC BY-SA 4.0); OBS Spout2 capture fork"
     PluginHasConfig = true
     PluginOpenSourceUrl = projectUrl.get()

@@ -35,7 +35,7 @@ try {
     $configNames = @($preferences.configs | ForEach-Object { $_.config })
     if ($configNames -notcontains "island.json") { throw "Merged preferences are missing island.json" }
 
-    $extensionClass = "io.github.gaboron.spwisland.host.IslandPlaybackExtension"
+    $extensionClass = "io.github.solitaire.spwisland.host.IslandPlaybackExtension"
     $extensionIndex = (Read-Entry "classes/META-INF/extensions.idx").Trim()
     if ($extensionIndex -ne $extensionClass) {
         throw "Unexpected extensions.idx: $extensionIndex"
@@ -43,10 +43,10 @@ try {
 
     $manifest = Read-Entry "classes/META-INF/MANIFEST.MF"
     $expectedManifest = [ordered]@{
-        "Plugin-Class" = "io.github.gaboron.spwisland.host.IslandPlugin"
-        "Plugin-Id" = "io.github.gaboron.spwisland"
+        "Plugin-Class" = "io.github.solitaire.spwisland.host.IslandPlugin"
+        "Plugin-Id" = "io.github.solitaire.spwisland"
         "Plugin-Version" = $version
-        "Plugin-Provider" = "GaBoron / Solitaire"
+        "Plugin-Provider" = "solitaire + 大肥鱼（感谢原作者 GaBoron）"
         "Plugin-Open-Source-Url" = "https://github.com/Rimliya/SPW-island"
     }
     foreach ($key in $expectedManifest.Keys) {
@@ -71,7 +71,7 @@ try {
         "classes/native/island-pointer.py",
         "classes/native/island-spectrum.py",
         "classes/native/install-gnome-pointer.py",
-        "classes/native/spw-island-pointer@gaboron.github.io.shell-extension.zip"
+        "classes/native/spw-island-pointer@solitaire.github.io.shell-extension.zip"
     )
     foreach ($required in $requiredEntries) {
         if (-not $entries.ContainsKey($required)) { throw "Missing package entry: $required" }

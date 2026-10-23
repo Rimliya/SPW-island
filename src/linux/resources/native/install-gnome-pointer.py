@@ -16,7 +16,7 @@ import runpy
 diagnostics = runpy.run_path(os.environ.get(
     "SPW_ISLAND_PY_DIAGNOSTICS", os.path.join(os.path.dirname(__file__), "island-diagnostics.py")))["install"]("install-gnome-pointer.py")
 
-UUID = 'spw-island-pointer@gaboron.github.io'
+UUID = 'spw-island-pointer@solitaire.github.io'
 
 
 def command(*args):

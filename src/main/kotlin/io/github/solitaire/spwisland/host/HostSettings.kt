@@ -1,0 +1,345 @@
+// SPDX-License-Identifier: GPL-3.0-only
+@file:OptIn(com.xuncorp.spw.workshop.api.UnstableSpwWorkshopApi::class)
+package io.github.solitaire.spwisland.host
+
+import com.xuncorp.spw.workshop.api.config.ConfigManager
+import com.xuncorp.spw.workshop.api.config.ConfigHelper
+import com.sun.jna.Platform
+import io.github.solitaire.spwisland.core.*
+import java.util.function.Consumer
+import java.nio.file.Files
+import kotlin.math.roundToInt
+import io.github.solitaire.spwisland.diagnostics.IslandLog
+
+class HostSettings(private val manager: ConfigManager, private val changed: () -> Unit) : SettingsStore, AutoCloseable {
+    private val lock = Any()
+    private val config = IslandConfigFile(manager.getConfig("island.json").getConfigPath())
+    private var closed = false
+    private var saveInProgress = false
+    private var accepted: IslandSettings? = null
+    private var fingerprint: ByteArray? = null
+    private val watcher = IslandConfigWatch(config.getConfigPath(), ::refresh) {
+        IslandLog.failure("settings", "sync.failed", it)
+    }
+    // Notifications are hints only. Keep our helper instead of adopting the settings form's
+    // mutable cache, which can still contain the position from before the latest drag.
+    private val listener = Consumer<ConfigHelper> { watcher.request() }
+    init {
+        migrateSettings()
+        accepted = decode()
+        SettingsDiagnostics.changed(null, checkNotNull(accepted), "initial")
+        manager.addConfigChangeListener("island.json", listener)
+        watcher.start()
+    }
+
+    override fun read(): IslandSettings = synchronized(lock) { accepted ?: decode() }
+    private fun migrateSettings() {
+        // Native sliders use floating-point values. Persist whole-number settings as integers
+        // so reopening SPW does not inherit noisy fractional values from the slider thumb.
+        if (!Files.exists(config.getConfigPath()) || !config.reload()) return
+        val migrated = migrateShapeForAppearanceA() or migrateCornerRoundnessForV0100() or
+            normalizeIntegerSettings() or normalizeBackgroundProgressSetting()
+        if (migrated) check(saveConfig()) { "词岛旧设置迁移失败，请检查 SPW 配置目录权限。" }
+    }
+    private fun decode(): IslandSettings = IslandSettings(
+        spout = SpoutSettings(
+            enabled = Platform.isWindows() && config.get<Any>("spout_enabled", true) == true,
+            name = config.get<Any>("spout_name", "SPW Lyrics Island").toString()
+                .filter { it in ' '..'~' }.take(128).trim().ifBlank { "SPW Lyrics Island" },
+            fps = if (number("spout_fps", 30, 30, 60) == 30) 30 else 60,
+            width = number("spout_width", 1280, 320, 3840),
+            height = number("spout_height", 512, 128, 2160),
+            adapter = number("spout_adapter", -1, -1, 31)
+        ),
+        // An incomplete settings write must not change an accepted visibility policy.
+        enabled = config.get("enabled", accepted?.enabled ?: true), translation = config.get("translation", true),
+        karaoke = config.get("karaoke", true),
+        forceKaraoke = config.get("force_karaoke", false),
+        experimentalMultiLine = config.get("experimental_multi_line", false),
+        hidePaused = config.get("hide_paused", accepted?.hidePaused ?: false),
+        hideFullscreen = Platform.isWindows() && config.get("hide_fullscreen", accepted?.hideFullscreen ?: true),
+        clickThrough = config.get("click_through", accepted?.clickThrough ?: false),
+        autoHideOnHover = config.get("auto_hide_on_hover", accepted?.autoHideOnHover ?: false),
+        scrollVolume = config.get("scroll_volume", false),
+        // Keep the original key so existing users retain their enabled setting after the rename.
+        lowPerformance = config.get("reduced_motion", false),
+        shape = IslandShape.fromStorage(config.get("shape", IslandShape.ROUNDED_RECTANGLE.storageName)),
+        squircle = config.get("squircle", true),
+        cornerRoundness = number("corner_roundness", 60, 0, 100),
+        heightMode = IslandHeightMode.fromStorage(config.get("height_mode", IslandHeightMode.AUTO.storageName)),
+        fixedHeight = number("fixed_height", 58, 40, 200),
+        textAlignment = IslandTextAlignment.fromStorage(config.get("text_alignment", "center")),
+        outlineStyle = LyricOutlineStyle.fromStorage(config.get("outline_style", "hard")),
+        lyricCoverColor = config.get("lyric_cover_color", false),
+        backgroundCoverColor = config.get("background_cover_color", true),
+        backgroundStyle = IslandBackgroundStyle.fromStorage(config.get("background_style", "classic")),
+        backgroundProgress = backgroundProgressMode(),
+        spectrumCoverColor = config.get("spectrum_cover_color", true),
+        fixedWidth = config.get("fixed_width", false),
+        leadingContent = leadingContentFromStorage(),
+        trailingContent = TrailingContent.fromStorage(config.get("trailing_content", defaultTrailing())),
+        spectrumLayout = SpectrumLayout.fromStorage(config.get("spectrum_layout", defaultSpectrumLayout())),
+        spectrumColorMode = SpectrumColorMode.fromStorage(config.get("spectrum_color_mode", defaultSpectrumColorMode())),
+        spectrumManualColor = config.get("spectrum_manual_color", "").trim(),
+        spectrumStyle = SpectrumStyle.fromStorage(config.get("spectrum_style", "solid")),
+        spectrumRounded = config.get("spectrum_rounded", true),
+        spectrumOpacity = number("spectrum_opacity", 100, 20, 100),
+        clock24Hour = config.get("clock_24h", true),
+        clockStyle = ClockStyle.fromStorage(config.get("clock_style", "dot")),
+        backgroundMaterial = BackgroundMaterial.fromStorage(config.get("background_material", "solid")),
+        gradientAngle = number("gradient_angle", 135, 0, 360),
+        gradientStartColor = config.get("gradient_start", "").trim(),
+        gradientEndColor = config.get("gradient_end", "").trim(),
+        flowSpeed = number("flow_speed", 100, 10, 400),
+        mosaicBlock = number("mosaic_block", 16, 4, 64),
+        coverVisible = config.get("cover_visible", true),
+        coverScale = number("cover_scale", 100, 40, 160),
+        fontFamily = config.get("font_family", DEFAULT_LYRIC_FONT_FAMILY).take(100).trim(),
+        fontWeight = LyricFontWeight.fromStorage(
+            config.get<Any>("font_weight", "400").toString().toDoubleOrNull()?.toInt()?.toString() ?: "400"
+        ),
+        fontSize = number("font_size", 22, 12, 72), maxWidth = number("max_width", 640, 280, 1200),
+        opacity = number("opacity", 96, 35, 100), offsetMs = number("offset_ms", 0, -2000, 2000),
+        screen = config.get("screen", ""),
+        positionX = optionalNumber("position_x"),
+        positionY = optionalNumber("position_y"),
+        positionAnchor = IslandAnchor.fromStorage(config.get("position_anchor", "")),
+        legacyCenterX = optionalNumber("center_x"),
+        legacyTop = optionalNumber("top")
+    )
+    internal fun refresh(): Boolean {
+        var retry = false
+        val notify = synchronized(lock) {
+            if (closed) return true
+            if (saveInProgress || !Files.exists(config.getConfigPath())) return false
+            val bytes = Files.readAllBytes(config.getConfigPath())
+            if (bytes.isEmpty()) return false
+            if (fingerprint?.contentEquals(bytes) == true) return true
+            // Failed/partial writes must not replace the last usable snapshot with defaults.
+            val retainedPosition = accepted?.positionState()
+            // Linux exposes font keys in SPW's form; those edits must be accepted too.
+            val retainedFont = if (Platform.isWindows()) accepted?.fontState() else null
+            if (!config.reload(bytes)) return false
+            val value = decodePreservingPluginSettings(retainedPosition, retainedFont)
+            val positionRestored = restorePosition(retainedPosition)
+            val fontRestored = restoreFont(retainedFont)
+            // Decode numeric sliders without writing back during every form edit.
+            val needsSave = positionRestored || fontRestored
+            if (needsSave && !saveConfig()) return false
+            // A later host write can race with save(). Recheck the file on the next poll,
+            // and never decode the mutable helper again to replace our owned state.
+            fingerprint = if (needsSave) null else bytes
+            retry = needsSave
+            (value != accepted).also {
+                if (it) SettingsDiagnostics.changed(accepted, value, "host")
+                accepted = value
+            }
+        }
+        if (notify) changed()
+        return !retry
+    }
+
+    private fun legacySides(): String = config.get("leading_content", "cover_spectrum")
+
+    private fun leadingContentFromStorage(): LeadingContent = when (legacySides()) {
+        // The old four-value enum shared one leading_content key with the new leading slot.
+        "cover_spectrum", "cover" -> LeadingContent.COVER
+        "spectrum" -> LeadingContent.SPECTRUM
+        "none" -> LeadingContent.NONE
+        else -> LeadingContent.fromStorage(config.get("leading_content", "cover"))
+    }
+
+    private fun defaultTrailing(): String = when (legacySides()) {
+        "cover_spectrum" -> "spectrum"
+        "none" -> "none"
+        else -> "status"
+    }
+
+    private fun defaultSpectrumLayout(): String = if (legacySides() == "none") "none" else "right_bars"
+
+    private fun defaultSpectrumColorMode(): String =
+        if (config.get("spectrum_cover_color", true)) "cover" else "manual"
+
+    private fun decodePreservingPluginSettings(position: PositionState?, font: FontState?): IslandSettings {
+        val decoded = decode()
+        val positioned = position?.applyTo(decoded) ?: decoded
+        return font?.applyTo(positioned) ?: positioned
+    }
+
+    private fun saveConfig(): Boolean {
+        // All writes, including stale-state restoration, can notify listeners synchronously.
+        saveInProgress = true
+        return try { config.save() } finally { saveInProgress = false }
+    }
+
+    /** Position is plugin-owned state; SPW's settings form can write back a stale config snapshot. */
+    private fun restorePosition(retained: PositionState?): Boolean {
+        if (retained == null || decode().positionState() == retained) return false
+        config.set("screen", retained.screen)
+        config.set("position_x", retained.x ?: Int.MIN_VALUE)
+        config.set("position_y", retained.y ?: Int.MIN_VALUE)
+        config.set("position_anchor", retained.anchor?.storageName ?: "")
+        config.set("center_x", retained.legacyCenterX ?: Int.MIN_VALUE)
+        config.set("top", retained.legacyTop ?: Int.MIN_VALUE)
+        return true
+    }
+
+    private fun IslandSettings.positionState() = PositionState(
+        screen, positionX, positionY, positionAnchor, legacyCenterX, legacyTop
+    )
+
+    /** The font picker owns these keys; SPW's settings form can save an older snapshot. */
+    private fun restoreFont(retained: FontState?): Boolean {
+        if (retained == null || decode().fontState() == retained) return false
+        config.set("font_family", retained.family)
+        config.set("font_weight", retained.weight.storageName)
+        return true
+    }
+
+    private fun IslandSettings.fontState() = FontState(fontFamily, fontWeight)
+
+    private fun number(key: String, default: Int, min: Int, max: Int): Int {
+        // Integer text fields coexist with numeric values saved by the original sliders.
+        val text = config.get<Any>(key, "") as? String
+        val value = text?.trim()?.toDoubleOrNull() ?: (config.get<Any>(key, default) as? Number)?.toDouble()
+        return value?.takeIf { it.isFinite() }?.coerceIn(min.toDouble(), max.toDouble())?.roundToInt() ?: default
+    }
+
+    private fun optionalNumber(key: String): Int? =
+        number(key, Int.MIN_VALUE, Int.MIN_VALUE, Int.MAX_VALUE).takeUnless { it == Int.MIN_VALUE }
+
+    private fun backgroundProgressMode(): BackgroundProgressMode =
+        when (val value = config.get<Any>("background_progress", "off")) {
+            true -> BackgroundProgressMode.FILL
+            is String -> when (value) {
+                "fill" -> BackgroundProgressMode.FILL
+                "top_line" -> BackgroundProgressMode.TOP_LINE
+                else -> BackgroundProgressMode.OFF
+            }
+            else -> BackgroundProgressMode.OFF
+        }
+
+    private fun normalizeBackgroundProgressSetting(): Boolean {
+        val value = config.get<Any>("background_progress", "off")
+        if (value !is Boolean) return false
+        config.set("background_progress", if (value) "fill" else "off")
+        return true
+    }
+
+    private fun migrateCornerRoundnessForV0100(): Boolean {
+        if (config.get(CORNER_ROUNDNESS_V0100_MIGRATED, false)) return false
+        config.set("corner_roundness", 60)
+        config.set(CORNER_ROUNDNESS_V0100_MIGRATED, true)
+        return true
+    }
+
+    /** A replaced the two-value pill/notch list; keep old profiles valid in the settings form. */
+    private fun migrateShapeForAppearanceA(): Boolean {
+        if (config.get<Any>("shape", "").toString() != "pill") return false
+        config.set("shape", IslandShape.ROUNDED_RECTANGLE.storageName)
+        return true
+    }
+
+    private fun normalizeIntegerSettings(): Boolean {
+        var changed = false
+        for ((key, limits) in INTEGER_SETTINGS) {
+            val raw = config.get<Any>(key, "")
+            val value = (raw as? Number)?.toDouble() ?: (raw as? String)?.trim()?.toDoubleOrNull() ?: continue
+            val rounded = value.takeIf { it.isFinite() }
+                ?.coerceIn(limits.first.toDouble(), limits.last.toDouble())?.roundToInt() ?: limits.default
+            if (raw !is Number || raw.toDouble() != rounded.toDouble()) {
+                config.set(key, rounded)
+                changed = true
+            }
+        }
+        return changed
+    }
+    override fun set(key: String, value: Any) = update { it.set(key, value) }
+    override fun setFont(family: String, weight: LyricFontWeight) = update(replacesFont = true) {
+        it.set("font_family", family.take(100).trim())
+        it.set("font_weight", weight.storageName)
+    }
+    override fun savePosition(screen: String, x: Int, y: Int, anchor: IslandAnchor) = update(replacesPosition = true) {
+        it.set("screen", screen); it.set("position_x", x); it.set("position_y", y)
+        it.set("position_anchor", anchor.storageName)
+        // Clear legacy center/top storage after the first drag on the automatic anchor model.
+        it.set("center_x", Int.MIN_VALUE); it.set("top", Int.MIN_VALUE); it.set("vertical_anchor", "free")
+    }
+    override fun resetPosition() = update(replacesPosition = true) {
+        it.set("screen", ""); it.set("position_x", Int.MIN_VALUE); it.set("position_y", Int.MIN_VALUE)
+        it.set("position_anchor", ""); it.set("center_x", Int.MIN_VALUE); it.set("top", Int.MIN_VALUE)
+        it.set("vertical_anchor", "free")
+    }
+    override fun resetAll() = update(replacesPosition = true, replacesFont = true) { helper ->
+        IslandSettingsDefaults.values.forEach { (key, value) -> helper.set(key, value) }
+    }
+    private fun update(replacesPosition: Boolean = false, replacesFont: Boolean = false,
+                       change: (ConfigHelper) -> Unit) {
+        synchronized(lock) {
+            if (closed) return
+            val retainedPosition = if (replacesPosition) null else accepted?.positionState()
+            val retainedFont = if (replacesFont || !Platform.isWindows()) null else accepted?.fontState()
+            // Brief truncation and concurrent edits are normal for SPW's form. Retry a complete
+            // read/merge/save, rather than saving defaults or reporting a transient race as failure.
+            var saved = false
+            for (attempt in 0 until 6) {
+                if (!Files.exists(config.getConfigPath()) || config.reload()) {
+                    restorePosition(retainedPosition)
+                    restoreFont(retainedFont)
+                    change(config)
+                    val next = decodePreservingPluginSettings(retainedPosition, retainedFont)
+                    if (saveConfig()) {
+                        SettingsDiagnostics.changed(accepted, next, "plugin", attempt + 1)
+                        accepted = next
+                        fingerprint = null
+                        saved = true
+                        break
+                    }
+                }
+                if (attempt < 5) Thread.sleep(10)
+            }
+            check(saved) { "词岛设置保存失败或配置仍在写入，未覆盖已有设置。" }
+        }
+        changed()
+    }
+    override fun close() {
+        synchronized(lock) { closed = true }
+        watcher.close()
+        manager.removeConfigChangeListener(listener)
+    }
+
+    private data class IntegerLimits(val default: Int, val first: Int, val last: Int)
+    private data class PositionState(
+        val screen: String,
+        val x: Int?,
+        val y: Int?,
+        val anchor: IslandAnchor?,
+        val legacyCenterX: Int?,
+        val legacyTop: Int?
+    ) {
+        fun applyTo(settings: IslandSettings) = settings.copy(
+            screen = screen, positionX = x, positionY = y, positionAnchor = anchor,
+            legacyCenterX = legacyCenterX, legacyTop = legacyTop
+        )
+    }
+    private data class FontState(val family: String, val weight: LyricFontWeight) {
+        fun applyTo(settings: IslandSettings) = settings.copy(fontFamily = family, fontWeight = weight)
+    }
+
+    private companion object {
+        val INTEGER_SETTINGS = mapOf(
+            "corner_roundness" to IntegerLimits(60, 0, 100),
+            "font_size" to IntegerLimits(22, 12, 72),
+            "fixed_height" to IntegerLimits(58, 40, 200),
+            "gradient_angle" to IntegerLimits(135, 0, 360),
+            "flow_speed" to IntegerLimits(100, 10, 400),
+            "mosaic_block" to IntegerLimits(16, 4, 64),
+            "cover_scale" to IntegerLimits(100, 40, 160),
+            "spectrum_opacity" to IntegerLimits(100, 20, 100),
+            "max_width" to IntegerLimits(640, 280, 1200),
+            "opacity" to IntegerLimits(96, 35, 100),
+            "offset_ms" to IntegerLimits(0, -2000, 2000)
+        )
+        const val CORNER_ROUNDNESS_V0100_MIGRATED = "corner_roundness_migrated_v0_10_0"
+    }
+}

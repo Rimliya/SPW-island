@@ -4,6 +4,8 @@
 
 <h1 align="center">灵动词岛 for SPW</h1>
 
+<p align="center">作者：solitaire + 大肥鱼　|　感谢原作者 GaBoron</p>
+
 > [!NOTE]
 > 这是用于 **OBS Spout2 捕获** 的 fork，fork 自原作者仓库 [GaBoron/SPW-island](https://github.com/GaBoron/SPW-island)。
 > 本 fork 当前正式版 `1.1.0-Main`：基于上游 1.1.0，保留 OBS Spout2 透明输出，包含 A/B/C 三批外观与性能改进，桌面隐藏后仍可显示歌词；默认歌词字体为内置苹方，可切换内置 MiSans 或系统字体。

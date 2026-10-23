@@ -15,7 +15,7 @@ diagnostics = runpy.run_path(os.environ.get(
     "SPW_ISLAND_PY_DIAGNOSTICS", os.path.join(os.path.dirname(__file__), "island-diagnostics.py")))["install"]("island-pointer.py")
 
 P, S, I = C.c_void_p, C.c_char_p, C.c_int
-INTERFACE = 'io.github.gaboron.SpwIsland.Pointer'
+INTERFACE = 'io.github.solitaire.SpwIsland.Pointer'
 OBJECT = '/io/github/gaboron/SpwIsland/Pointer'
 
 

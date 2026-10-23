@@ -1,0 +1,62 @@
+// SPDX-License-Identifier: GPL-3.0-only
+package io.github.solitaire.spwisland.ui
+
+import io.github.solitaire.spwisland.diagnostics.IslandLog
+import io.github.solitaire.spwisland.diagnostics.DiagnosticExecutors
+
+import java.awt.Shape
+import java.awt.geom.Rectangle2D
+import java.text.BreakIterator
+import java.util.Locale
+import java.util.concurrent.CompletableFuture
+import java.util.concurrent.ThreadPoolExecutor
+import java.util.concurrent.ArrayBlockingQueue
+import java.util.concurrent.TimeUnit
+import io.github.solitaire.spwisland.core.Word
+
+/** Bounded background preparation keeps outline intersections off the animation thread. */
+object WordGeometry {
+    data class Cluster(val bounds: Rectangle2D, val shape: Shape)
+    data class Cell(val bounds: Rectangle2D, val clusters: List<Cluster>)
+    private data class Key(val shaped: ShapedText, val words: List<Word>)
+    private val worker = DiagnosticExecutors.pool(1, 1, 30, TimeUnit.SECONDS, ArrayBlockingQueue(8),
+        { task -> Thread(task, "island-word-geometry").apply { isDaemon = true; uncaughtExceptionHandler = IslandLog.uncaught("WordGeometry") } },
+        ThreadPoolExecutor.AbortPolicy()).apply { allowCoreThreadTimeOut(true) }
+    private val cache = object : LinkedHashMap<Key, CompletableFuture<List<Cell>>>(8, .75f, true) {
+        override fun removeEldestEntry(eldest: MutableMap.MutableEntry<Key, CompletableFuture<List<Cell>>>) = size > 8
+    }
+
+    @Synchronized fun ready(shaped: ShapedText, text: String, words: List<Word>): List<Cell>? {
+        val key = Key(shaped, words)
+        val future = cache[key] ?: try {
+            CompletableFuture.supplyAsync({ prepare(shaped, text, words) }, worker).whenComplete { _, error ->
+                if (error != null) IslandLog.failure("lyrics", "geometry.failed", error)
+            }.also { cache[key] = it }
+        } catch (error: java.util.concurrent.RejectedExecutionException) {
+            IslandLog.warn("lyrics", "geometry.queue_full"); return null
+        }
+        return if (future.isCompletedExceptionally) null else future.getNow(null)
+    }
+
+    internal fun prepare(shaped: ShapedText, text: String, words: List<Word>): List<Cell> {
+        val breaks = BreakIterator.getCharacterInstance(Locale.ROOT).apply { setText(text) }
+        var offset = 0
+        return words.map { word ->
+            val end = (offset + word.text.length).coerceAtMost(text.length)
+            val bounds = shaped.layout.getLogicalHighlightShape(offset, end).bounds2D
+            val clusters = mutableListOf<Cluster>()
+            while (offset < end) {
+                val next = minOf(breaks.following(offset).takeUnless { it == BreakIterator.DONE } ?: end, end)
+                clusters += Cluster(shaped.layout.getLogicalHighlightShape(offset, next).bounds2D, shaped.glyph(offset, next))
+                offset = next
+            }
+            Cell(bounds, clusters)
+        }
+    }
+
+    /** Waits for queued geometry so deterministic render checks observe settled output. */
+    fun awaitIdle() {
+        val queued = synchronized(this) { cache.values.toList() }
+        queued.forEach { runCatching { it.join() } }
+    }
+}
