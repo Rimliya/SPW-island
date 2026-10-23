@@ -17,6 +17,7 @@ internal class WindowDiagnostics : AutoCloseable {
     private var lastSampleNs = 0L
     private var lastPresentedFrames = 0L
     private var lastTicks = 0L
+    private var nextPerformanceSample = 0L
     private var issueStarted = 0L
     private var issueReported = 0L
     private var issueCount = 0L
@@ -41,6 +42,15 @@ internal class WindowDiagnostics : AutoCloseable {
         val presentedFps = if (deltaNs == 0L) 0.0 else (presented - lastPresentedFrames) * 1e9 / deltaNs
         val dispatchFps = if (deltaNs == 0L) 0.0 else (tickCount - lastTicks) * 1e9 / deltaNs
         lastSampleNs = now; lastPresentedFrames = presented; lastTicks = tickCount
+        if (deltaNs != 0L && now >= nextPerformanceSample) {
+            IslandLog.event("performance", "frame_sample", mapOf(
+                "fps" to "%.1f".format(presentedFps),
+                "dispatchFps" to "%.1f".format(dispatchFps),
+                "reason" to reason,
+                "presented" to presented,
+            ))
+            nextPerformanceSample = now + PERFORMANCE_SAMPLE_INTERVAL_NS
+        }
         val native = IslandLog.attempt("window", "native_state.failed") { NativeWindowDiagnostics.read(window) }.getOrDefault(emptyMap())
         val context = mapOf("awtVisible" to window.isVisible, "displayable" to window.isDisplayable,
             "onScreen" to onscreen, "width" to window.width, "height" to window.height,
@@ -76,4 +86,8 @@ internal class WindowDiagnostics : AutoCloseable {
         }
     }
     override fun close() { ticks.close(); frames.close(); IslandLog.event("window", "window.closed") }
+
+    private companion object {
+        const val PERFORMANCE_SAMPLE_INTERVAL_NS = 5_000_000_000L
+    }
 }
