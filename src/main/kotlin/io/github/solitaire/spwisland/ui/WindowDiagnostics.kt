@@ -14,10 +14,6 @@ internal class WindowDiagnostics : AutoCloseable {
     private val frames = DiagnosticPulse("rendering", "frame_production")
     private var tickCount = 0L
     private var nextSample = 0L
-    private var lastSampleNs = 0L
-    private var lastPresentedFrames = 0L
-    private var lastTicks = 0L
-    private var nextPerformanceSample = 0L
     private var issueStarted = 0L
     private var issueReported = 0L
     private var issueCount = 0L
@@ -38,25 +34,11 @@ internal class WindowDiagnostics : AutoCloseable {
         IslandLog.state("window", "display_policy", reason)
         val onscreen = GraphicsEnvironment.getLocalGraphicsEnvironment().screenDevices
             .any { it.defaultConfiguration.bounds.intersects(window.bounds) }
-        val deltaNs = if (lastSampleNs == 0L) 0L else (now - lastSampleNs).coerceAtLeast(1L)
-        val presentedFps = if (deltaNs == 0L) 0.0 else (presented - lastPresentedFrames) * 1e9 / deltaNs
-        val dispatchFps = if (deltaNs == 0L) 0.0 else (tickCount - lastTicks) * 1e9 / deltaNs
-        lastSampleNs = now; lastPresentedFrames = presented; lastTicks = tickCount
-        if (deltaNs != 0L && now >= nextPerformanceSample) {
-            IslandLog.event("performance", "frame_sample", mapOf(
-                "fps" to "%.1f".format(presentedFps),
-                "dispatchFps" to "%.1f".format(dispatchFps),
-                "reason" to reason,
-                "presented" to presented,
-            ))
-            nextPerformanceSample = now + PERFORMANCE_SAMPLE_INTERVAL_NS
-        }
         val native = IslandLog.attempt("window", "native_state.failed") { NativeWindowDiagnostics.read(window) }.getOrDefault(emptyMap())
         val context = mapOf("awtVisible" to window.isVisible, "displayable" to window.isDisplayable,
             "onScreen" to onscreen, "width" to window.width, "height" to window.height,
             "x" to window.x, "y" to window.y, "renderer" to renderer,
-            "inputAvailable" to inputAvailable, "topmostAvailable" to topmostAvailable,
-            "fps" to "%.1f".format(presentedFps), "dispatchFps" to "%.1f".format(dispatchFps)) + native
+            "inputAvailable" to inputAvailable, "topmostAvailable" to topmostAvailable) + native
         val status = when {
             reason != "visible" -> "hidden_by_policy"
             !window.isDisplayable -> "peer_missing"
@@ -86,8 +68,4 @@ internal class WindowDiagnostics : AutoCloseable {
         }
     }
     override fun close() { ticks.close(); frames.close(); IslandLog.event("window", "window.closed") }
-
-    private companion object {
-        const val PERFORMANCE_SAMPLE_INTERVAL_NS = 5_000_000_000L
-    }
 }
