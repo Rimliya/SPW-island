@@ -3,7 +3,8 @@ package io.github.solitaire.spwisland.ui
 
 /** Deterministic checks for the desktop frame-rate ceiling. */
 internal fun checkFramePacing() {
-    val clock = IslandFrameClock { 0L }
+    var now = 0L
+    val clock = IslandFrameClock { now }
     val interval = 8_333_333L
 
     check(clock.earlyDeliveryDelay(0L, interval) == null)
@@ -11,4 +12,8 @@ internal fun checkFramePacing() {
     check(clock.earlyDeliveryDelay(interval, interval) == null)
     check(clock.earlyDeliveryDelay(15_700_000L, interval) == 966_666L)
     check(clock.earlyDeliveryDelay(interval * 2, interval) == null)
+
+    clock.frameStarted(7_500_000L)
+    now = 15_700_000L
+    check(clock.delay(interval) == 133_333L) { "Sub-millisecond frame delay was rounded up" }
 }

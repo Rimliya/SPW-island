@@ -40,5 +40,5 @@ internal class IslandFrameClock(private val nanoTime: () -> Long = System::nanoT
         return 1_000_000_000L / minOf(refreshRate, profile.maxFrameRate)
     }
 
-    fun delay(interval: Long): Long = (started + interval - nanoTime()).coerceAtLeast(1_000_000L)
+    fun delay(interval: Long): Long = (started + interval - nanoTime()).coerceAtLeast(1L)
 }
