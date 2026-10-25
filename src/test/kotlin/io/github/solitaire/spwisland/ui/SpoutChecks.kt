@@ -12,6 +12,7 @@ import javax.swing.SwingUtilities
 
 /** Deterministic regressions for the native painter and the compatibility raster; no host or OBS required. */
 fun main() {
+    checkFramePacing()
     val directory = File("build/verification").apply { mkdirs() }
     SwingUtilities.invokeAndWait {
         val settings = IslandSettings(spout = SpoutSettings(enabled = true), fontFamily = "Microsoft YaHei")

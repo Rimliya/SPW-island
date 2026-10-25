@@ -205,6 +205,11 @@ class IslandWindow(private val timeline: PlaybackSource, private val store: Sett
         settings = store.read()
         val now = System.nanoTime()
         frameClock.frameStarted(now)
+        val pacingInterval = frameClock.interval(window.graphicsConfiguration.device, settings.performance)
+        frameClock.earlyDeliveryDelay(now, pacingInterval)?.let {
+            frameInterval = it
+            return
+        }
         val controlsBlocked = menu.aboutVisible
         pointerPresence?.setSuppressed(controlsBlocked)
         val dt = ((now - lastFrame) / 1_000_000_000.0).coerceIn(0.0, .1)

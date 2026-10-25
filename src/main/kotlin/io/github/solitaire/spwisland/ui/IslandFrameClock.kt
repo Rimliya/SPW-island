@@ -10,8 +10,24 @@ internal class IslandFrameClock(private val nanoTime: () -> Long = System::nanoT
     private var nextDisplayCheck = 0L
     private var refreshRate = 60
     private var started = nanoTime()
+    private var cadenceStart: Long? = null
 
     fun frameStarted(now: Long) { started = now }
+
+    /**
+     * Rejects scheduler wakeups that arrive ahead of the requested desktop cadence.
+     * The cadence anchor advances only for deliveries that actually render a frame, so
+     * timer rounding or a shorter Spout deadline cannot make the overlay exceed its cap.
+     */
+    fun earlyDeliveryDelay(now: Long, interval: Long): Long? {
+        val previous = cadenceStart
+        if (previous != null) {
+            val earliest = previous + interval
+            if (now < earliest) return earliest - now
+        }
+        cadenceStart = now
+        return null
+    }
 
     fun interval(display: GraphicsDevice, profile: PerformanceProfile): Long {
         val now = nanoTime()
