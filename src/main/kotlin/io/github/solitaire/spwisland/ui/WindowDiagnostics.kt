@@ -8,6 +8,17 @@ import io.github.solitaire.spwisland.platform.NativeWindowDiagnostics
 import java.awt.GraphicsEnvironment
 import java.awt.Window
 
+internal enum class WindowHealth {
+    OK,
+    HIDDEN_BY_POLICY,
+    TOPMOST_MISSING,
+    NATIVE_INVISIBLE,
+    AWT_HIDDEN,
+    PEER_MISSING,
+    INVALID_BOUNDS,
+    MINIMIZED,
+}
+
 /** Cheap frame heartbeats; platform samples follow the centralized performance budget. */
 internal class WindowDiagnostics : AutoCloseable {
     private val ticks = DiagnosticPulse("window", "frame_dispatch")
@@ -25,11 +36,11 @@ internal class WindowDiagnostics : AutoCloseable {
     }
     fun sample(window: Window, reason: String, profile: PerformanceProfile, presented: Long,
                renderer: String, inputAvailable: Boolean = true, topmostAvailable: Boolean = true,
-               pointerValid: Boolean? = null) {
+               pointerValid: Boolean? = null): WindowHealth? {
         frames.beat(presented)
         frames.expected = reason == "visible"
         val now = System.nanoTime()
-        if (now < nextSample) return
+        if (now < nextSample) return null
         nextSample = now + profile.diagnosticSampleIntervalNs
         IslandLog.state("window", "display_policy", reason)
         val onscreen = GraphicsEnvironment.getLocalGraphicsEnvironment().screenDevices
@@ -49,6 +60,16 @@ internal class WindowDiagnostics : AutoCloseable {
             native["nativeTopmost"] == false -> "os_reports_not_topmost"
             else -> "internally_visible_compositor_unverified"
         }
+        val health = when (status) {
+            "hidden_by_policy" -> WindowHealth.HIDDEN_BY_POLICY
+            "peer_missing" -> WindowHealth.PEER_MISSING
+            "awt_hidden" -> WindowHealth.AWT_HIDDEN
+            "invalid_bounds" -> WindowHealth.INVALID_BOUNDS
+            "os_reports_invisible" -> WindowHealth.NATIVE_INVISIBLE
+            "os_reports_minimized" -> WindowHealth.MINIMIZED
+            "os_reports_not_topmost" -> WindowHealth.TOPMOST_MISSING
+            else -> WindowHealth.OK
+        }
         IslandLog.state("window", "observed_state", status, context)
         IslandLog.state("rendering", "backend", renderer)
         IslandLog.state("input", "global_pointer", pointerValid?.toString() ?: "unused")
@@ -66,6 +87,7 @@ internal class WindowDiagnostics : AutoCloseable {
                 "durationMs" to (now - issueStarted) / 1_000_000, "state" to status))
             issueStarted = 0; issueCount = 0
         }
+        return health
     }
     override fun close() { ticks.close(); frames.close(); IslandLog.event("window", "window.closed") }
 }

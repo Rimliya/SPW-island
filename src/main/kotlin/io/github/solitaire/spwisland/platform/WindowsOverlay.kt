@@ -38,6 +38,24 @@ class WindowsOverlay {
         error("无法维持词岛置顶：$error")
     }
 
+    /** Force a fresh native topmost transition without touching persistent settings. */
+    fun forceTopmost(window: Window) {
+        val api = user32 ?: return
+        if (!window.isDisplayable || !window.isVisible) return
+        val hwnd = existingHandle(window, api) ?: return
+        val flags = 0x0001 or 0x0002 or 0x0010 or 0x0200 // NOSIZE | NOMOVE | NOACTIVATE | NOOWNERZORDER
+        fun place(target: Long) {
+            Native.setLastError(0)
+            if (!api.SetWindowPos(hwnd, HWND(Pointer.createConstant(target)), 0, 0, 0, 0, flags)) {
+                error("无法重建词岛置顶状态：${Native.getLastError()}")
+            }
+        }
+        // Some AWT peers ignore a repeated HWND_TOPMOST request. Leave the topmost band
+        // first so the following request performs a real WS_EX_TOPMOST transition.
+        place(-2L) // HWND_NOTOPMOST
+        place(-1L) // HWND_TOPMOST
+    }
+
     fun clickThrough(window: Window, enabled: Boolean) {
         val api = user32 ?: return
         if (!window.isDisplayable) return

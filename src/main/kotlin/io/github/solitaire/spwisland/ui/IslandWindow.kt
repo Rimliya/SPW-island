@@ -35,6 +35,9 @@ class IslandWindow(private val timeline: PlaybackSource, private val store: Sett
                    private val menuActions: IslandMenuActions? = null) : AutoCloseable {
     companion object {
         private const val HOVER_MARGIN = 18
+        private const val STARTUP_RECOVERY_WINDOW_NS = 30_000_000_000L
+        private const val PRESENTATION_RETRY_DELAY_NS = 1_500_000_000L
+        private const val MAX_PRESENTATION_RECOVERIES = 2
     }
     // A persistent overlay is a frame, not an AWT popup (SunAwtWindow).
     // Give it a distinct native role from tray menus and tooltips.
@@ -82,6 +85,9 @@ class IslandWindow(private val timeline: PlaybackSource, private val store: Sett
     private var fullscreen = false
     private var nextScreenCheck = 0L
     private var nextTopmostCheck = 0L
+    private val startupPresentationDeadline = System.nanoTime() + STARTUP_RECOVERY_WINDOW_NS
+    private var nextPresentationRecovery = 0L
+    private var presentationRecoveries = 0
     private var fullscreenHidden = false
     private var topmostAvailable = true
     private var lastFrame = System.nanoTime()
@@ -402,7 +408,7 @@ class IslandWindow(private val timeline: PlaybackSource, private val store: Sett
                 try { window.paint(graphics) } finally { graphics.dispose() }
             }
         } else surface.repaint()
-        diagnostics.sample(window, when {
+        val health = diagnostics.sample(window, when {
             paused -> "pausing"
             settings.autoHideOnHover && surface.hoverPose.reveal < .01 -> "hover_hidden"
             else -> "visible"
@@ -410,6 +416,7 @@ class IslandWindow(private val timeline: PlaybackSource, private val store: Sett
             performance, presentedFrames, renderer.rendererInfo,
             nativeAvailable && native.supportsClickThrough || inputRegion != null, topmostAvailable,
             if (settings.autoHideOnHover && clickThrough) mouse != null else null)
+        if (health != null) recoverPresentationIfNeeded(health, now)
         val displayInterval = frameClock.interval(device, performance)
         frameInterval = when {
             press != null || !performance.animateLayout -> displayInterval
@@ -418,6 +425,64 @@ class IslandWindow(private val timeline: PlaybackSource, private val store: Sett
                 maxOf(displayInterval, 50_000_000L)
             else -> displayInterval
         }
+    }
+
+    /**
+     * Startup-only presentation repair. First try a native topmost transition; if the
+     * compositor still reports the window as missing/not topmost, rebuild the display layer
+     * exactly once more without ever changing the persisted enabled setting.
+     */
+    private fun recoverPresentationIfNeeded(health: WindowHealth, now: Long) {
+        if (closed || !settings.enabled || now > startupPresentationDeadline ||
+            now < nextPresentationRecovery || presentationRecoveries >= MAX_PRESENTATION_RECOVERIES) return
+        var stage = when (health) {
+            WindowHealth.TOPMOST_MISSING -> if (presentationRecoveries == 0) "topmost" else "rebuild"
+            WindowHealth.NATIVE_INVISIBLE, WindowHealth.AWT_HIDDEN, WindowHealth.PEER_MISSING -> "rebuild"
+            else -> return
+        }
+        presentationRecoveries++
+        nextPresentationRecovery = now + PRESENTATION_RETRY_DELAY_NS
+        IslandLog.event("window", "presentation_recovery.started", mapOf(
+            "stage" to stage, "reason" to health.name, "attempt" to presentationRecoveries))
+        if (stage == "topmost") {
+            try {
+                native.forceTopmost(window)
+                nextTopmostCheck = 0
+                surface.repaint()
+                if (renderer.active) renderer.draw()
+            } catch (error: Exception) {
+                IslandLog.failure("window", "presentation_recovery.topmost_failed", error)
+                stage = "rebuild"
+                rebuildPresentation("topmost_failed")
+            }
+        } else {
+            rebuildPresentation(health.name)
+        }
+        IslandLog.event("window", "presentation_recovery.completed", mapOf(
+            "stage" to stage, "reason" to health.name, "attempt" to presentationRecoveries))
+    }
+
+    /** Internal equivalent of toggling the desktop island off and on, without changing config. */
+    private fun rebuildPresentation(reason: String) {
+        panel.expanded = false
+        panel.hoverSettled = false
+        panel.cancelInteractions()
+        if (window.isVisible) window.isVisible = false
+        panel.releaseBuffers()
+        window.releaseFrame()
+        renderer.release()
+        window.gpuRendering = false
+        canvasWidth = 0
+        canvasHeight = 0
+        buffersReleased = true
+        surface.hoverPose = IslandHoverMotion.Pose.HIDDEN
+        hoverActive = false
+        clickThroughApplied = null
+        nextScreenCheck = 0
+        nextTopmostCheck = 0
+        frameInterval = 200_000_000L
+        surface.repaint()
+        IslandLog.event("window", "presentation_rebuild", mapOf("reason" to reason))
     }
 
     /** Keep one outstanding frame and avoid adding rendering time to the target interval. */
