@@ -135,6 +135,8 @@ class IslandPanel(private val actions: PlaybackActions, report: (Throwable) -> U
 
     internal fun releaseBuffers() { alphaMask.release(); expandedContent.release() }
 
+    internal fun cancelInteractions() { progress.cancelGesture(); volumeFeedback.reset() }
+
     internal fun gpuFrame(): IslandGpuFrame {
         val reveal = expansion ?: if (expanded) 1.0 else 0.0
         val animation = if (settings.performance.animateLayout) transition else 1.0

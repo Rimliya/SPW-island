@@ -436,6 +436,7 @@ Windows 和 Linux 共用 `preference_config.json`，平台专属设置在名称�
 | `WindowsOverlay.kt` | Windows 覆盖窗口能力：鼠标穿透、置顶强化和前台全屏判断 |
 | `WindowsNativeResources.kt` | 按插件类加载器提取并复用原生 DLL、辅助程序和配套数据的临时副本，避免占用插件安装目录 |
 | `WindowsTrayExecutable.kt` | 在用户本地应用数据目录部署并复用固定路径的托盘程序，按内容更新且串行安装 |
+| `WindowsApplicationData.kt` | 查询本地应用数据的实际重定向目标，使 MSIX 宿主部署的程序可由 CLR 直接访问 |
 | `SystemTheme.kt` | 读取 Windows 应用深浅色主题 |
 | `DotNetFrameworkRuntime.kt` | 在启动实时频谱 helper 前静默检查所需 .NET Framework CLR |
 
@@ -505,6 +506,7 @@ Windows 和 Linux 共用 `preference_config.json`，平台专属设置在名称�
 | `gpu/IslandGpuControls.kt` | 原生控制图标、歌曲信息、可拖动进度和音量条过渡的呈现 |
 | `gpu/IslandGpuResources.kt` | 有界原生路径与封面缓存、复用画笔和透明图层资源 |
 | `IslandLyricPresentation.kt` | GPU 与兼容绘制共用的行位置、换行透明度和缩放 |
+| `IslandContentGeometry.kt` | GPU 与兼容绘制共用的内容坐标，匹配窗口整数锚点并保留连续动画尺寸 |
 | `LyricTextPlacement.kt` | 共用的逐字边界、双向 caret、居中与滚动计算 |
 | `gpu/IslandGpuInput.kt` | 将原生输入转给已有按钮、进度、拖动和滚轮逻辑，保留拖动捕获 |
 | `platform/WindowsGpuInput.kt` | 独立的非聚焦输入窗口；轮廓外穿透，不裁切 GPU 画面 |
@@ -585,7 +587,8 @@ LyricPainter
 | `IslandTextBlock.kt` | 决定主歌词/翻译文本、字体、字形布局、逐字单元和单行尺寸 |
 | `IslandLyricsPainter.kt` | 绘制当前歌词行，并处理歌词切换和多行位置过渡 |
 | `LyricPainter.kt` | 单行歌词的实际绘制入口；负责居中、长歌词滚动、逐字高亮和低性能绘制路径 |
-| `LyricTypography.kt` | 使用 `TextLayout` 统一文本塑形、测量、字体 fallback 和字形轮廓缓存 |
+| `LyricTypography.kt` | 使用 `TextLayout` 统一文本塑形、测量、字体 fallback 和整行轮廓缓存 |
+| `LyricGlyphOutline.kt` | 筛选当前 grapheme 附近的轮廓，在复杂度预算内生成裁剪字形 |
 | `AmllWordPainter.kt` | 对已塑形的 grapheme 应用逐字高亮、位移、缩放和辉光 |
 | `AmllMotion.kt` | AMLL 来源的逐字浮动、长音强调和歌词行切换运动曲线；只接收规则给出的长音结果 |
 | `longtone/` | 准备 Unicode 文本信息、选择语言规则，并保守判断当前 timing cell 是否为长音 |
@@ -625,7 +628,7 @@ LyricPainter
 | `IslandBackgroundProgress.kt` | 在词岛背景中绘制整曲播放进度，包括注水和边缘细线；细线位于胶囊顶部或刘海底部 |
 | `IslandProgressTransition.kt` | 背景进度的非线性淡入淡出和退出样式保留；独立状态由窗口帧更新，绘制不推进动画 |
 | `PlaybackProgress.kt` | 共用的进度 / 音量呈现、悬停命中与鼠标手势；音量反馈期间点击 / 拖动调音量，播放进度仍在松手时一次提交并防止切歌后误 seek |
-| `IslandVolumeFeedback.kt` | 音量反馈的悬停保持、拖动预览与请求合并、2 秒超时和连续过渡；收起复位并按代次拒绝迟到结果 |
+| `IslandVolumeFeedback.kt` | 音量反馈的悬停保持、拖动预览与请求合并、2 秒超时和连续过渡；收起时停止交互并平滑退出，按代次拒绝迟到结果 |
 | `PlaybackIcon.kt` | 与字体无关的上一首、播放、暂停和下一首矢量图标 |
 | `SyntheticSpectrum.kt` | 无需音频捕获的低成本模拟频谱 |
 
@@ -1014,7 +1017,7 @@ IslandWindow
 
 `scroll_volume` 默认为 `false`。`IslandVolumeFeedback` 仅在正常交互且控件展开时接收滚轮，按每格 2% 发送增量。音量条未完全消失时，悬停或拖动会保持显示，移开后重新计时 2 秒。点击 / 拖动使用绝对音量，立即预览并按窗口帧时钟合并宿主请求，松手时提交最终值；拖动捕获由现有 GPU / Swing 输入路径保留，拖动期间保持词岛展开。低性能模式沿用 `PerformanceProfile` 的低帧率降低请求频率，并通过 `animateLayout` 直接切换样式。
 
-进度填充、时间 / 音量标签在 GPU 与 Java2D 路径共用呈现数据；收起或隐藏时立即取消音量手势并复位，拒绝该次展开中尚未返回的结果。Linux 使用 `volume` / `set_volume` 命令分别传递增量 / 绝对值，通过 `IslandVolumeResult` 返回实际音量；复用现有发送线程，不增加后台轮询。
+进度填充、时间 / 音量标签在 GPU 与 Java2D 路径共用呈现数据；收起时立即取消音量手势并拒绝该次展开中尚未返回的结果，保留当前呈现状态，平滑过渡回播放进度。窗口完全隐藏时复位音量反馈。Linux 使用 `volume` / `set_volume` 命令分别传递增量 / 绝对值，通过 `IslandVolumeResult` 返回实际音量；复用现有发送线程，不增加后台轮询。
 
 ### 修改设置
 
@@ -1278,7 +1281,7 @@ Windows 的：
 
 Windows 原生 DLL、音频辅助程序和 ICU 数据由 `WindowsNativeResources` 按需复制到临时运行目录；同一插件类加载器复用副本，新类加载器使用独立目录。已加载的 DLL 可以存活到 JVM 退出，因此不直接从可替换的插件安装目录加载。
 
-托盘程序由 `WindowsTrayExecutable` 部署到 `%LOCALAPPDATA%\spw-island\tray\spw-island-tray.exe`，启动时核对内容，仅在需要时更新。`NotificationIcon` 以固定 GUID 注册图标，新增、版本设置、注销及资源管理器重启后的恢复使用相同身份。两种性能模式共用上述按需部署路径，不增加轮询或持续后台任务。
+托盘程序由 `WindowsTrayExecutable` 部署到本地应用数据实际目录下的 `spw-island\tray\spw-island-tray.exe`，启动时核对内容，仅在需要时更新。`WindowsApplicationData` 使用 `SHGetKnownFolderPath` 的 `KF_FLAG_RETURN_FILTER_REDIRECTION_TARGET` 查询实际路径，兼容 Store / MSIX 宿主的应用数据虚拟化。`NotificationIcon` 以固定 GUID 注册图标，新增、版本设置、注销及资源管理器重启后的恢复使用相同身份。辅助程序在消息循环就绪后发送 `READY`，保证随后立即到达的 `STOP` 可以退出该循环。诊断日志区分辅助程序就绪、退出、启动失败及使用宿主身份的 AWT 降级。两种性能模式共用上述按需部署路径，不增加轮询或持续后台任务。
 
 不要在绘制函数中执行：
 
@@ -1298,7 +1301,7 @@ Windows 原生 DLL、音频辅助程序和 ICU 数据由 `WindowsNativeResources
 
 `IslandLyricsPreparation` 提前预备后续歌词的测量结果，按需请求轮廓和逐字几何。布局缓存和 `LyricTypography` 的缓存锁只用于读取与发布结果，冷塑形在锁外执行，后台任务不会因持有缓存锁阻塞绘制线程。
 
-`WordGeometry` 在有界后台线程准备昂贵的字形轮廓。
+`WordGeometry` 在有界后台线程准备逐字几何。`LyricGlyphOutline` 仅对当前 grapheme 附近的轮廓做相交运算，避免为每个字重新解析整行。字符、轮廓段数和累计运算量均有上限；超出预算时使用已有的逐字高亮，省略逐字浮动和辉光。逐字几何仅由有界缓存持有，整行塑形缓存不再重复保留裁剪字形。低性能模式继续跳过逐字几何准备。
 
 动画线程可以在几何尚未准备完成时使用轻量 fallback，不应等待后台任务。
 
