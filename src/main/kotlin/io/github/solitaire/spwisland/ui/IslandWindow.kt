@@ -85,7 +85,7 @@ class IslandWindow(private val timeline: PlaybackSource, private val store: Sett
     private var fullscreen = false
     private var nextScreenCheck = 0L
     private var nextTopmostCheck = 0L
-    private val startupPresentationDeadline = System.nanoTime() + STARTUP_RECOVERY_WINDOW_NS
+    private var startupVisibleAt = 0L
     private var nextPresentationRecovery = 0L
     private var presentationRecoveries = 0
     private var fullscreenHidden = false
@@ -378,6 +378,7 @@ class IslandWindow(private val timeline: PlaybackSource, private val store: Sett
         }
         if (!window.isVisible) {
             window.isVisible = true
+            if (startupVisibleAt == 0L) startupVisibleAt = now
             nextTopmostCheck = 0
         }
         if (fullscreenHidden) {
@@ -433,7 +434,8 @@ class IslandWindow(private val timeline: PlaybackSource, private val store: Sett
      * exactly once more without ever changing the persisted enabled setting.
      */
     private fun recoverPresentationIfNeeded(health: WindowHealth, now: Long) {
-        if (closed || !settings.enabled || now > startupPresentationDeadline ||
+        if (closed || !settings.enabled || startupVisibleAt == 0L ||
+            now - startupVisibleAt > STARTUP_RECOVERY_WINDOW_NS ||
             now < nextPresentationRecovery || presentationRecoveries >= MAX_PRESENTATION_RECOVERIES) return
         var stage = when (health) {
             WindowHealth.TOPMOST_MISSING -> if (presentationRecoveries == 0) "topmost" else "rebuild"
