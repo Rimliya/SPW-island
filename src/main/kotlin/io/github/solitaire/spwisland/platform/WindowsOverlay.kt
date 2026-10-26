@@ -54,6 +54,7 @@ class WindowsOverlay {
         // first so the following request performs a real WS_EX_TOPMOST transition.
         place(-2L) // HWND_NOTOPMOST
         place(-1L) // HWND_TOPMOST
+        if (api.GetWindowLong(hwnd, -20) and 8 == 0) error("词岛置顶状态未生效")
     }
 
     fun clickThrough(window: Window, enabled: Boolean) {
