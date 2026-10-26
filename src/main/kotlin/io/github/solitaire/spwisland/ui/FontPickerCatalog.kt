@@ -63,8 +63,7 @@ internal object FontPickerCatalog {
         val installed = GraphicsEnvironment.getLocalGraphicsEnvironment().allFonts
         val families = installed.groupBy { it.getFamily(Locale.ROOT) }
         return listOf(
-            PickerFamily(DEFAULT_LYRIC_FONT_FAMILY, "苹方（默认）", bundledPingFangFaces, "插件内置字体 · 默认"),
-            PickerFamily("", "内置 MiSans", bundledFaces, "插件内置字体", true)
+            PickerFamily(DEFAULT_LYRIC_FONT_FAMILY, "苹方（默认）", bundledPingFangFaces, "插件内置字体 · 默认")
         ) +
             families.map { (name, fonts) ->
             PickerFamily(name, fonts.first().getFamily(locale), fonts.map { font ->
@@ -98,8 +97,7 @@ internal object FontPickerCatalog {
             }
         }
         val bundled = listOf(
-            PickerFamily(DEFAULT_LYRIC_FONT_FAMILY, "苹方（默认）", bundledPingFangFaces, "插件内置字体 · 默认"),
-            PickerFamily("", "内置 MiSans", bundledFaces, "插件内置字体", true)
+            PickerFamily(DEFAULT_LYRIC_FONT_FAMILY, "苹方（默认）", bundledPingFangFaces, "插件内置字体 · 默认")
         )
         return bundled + grouped.map { (name, faces) ->
             PickerFamily(name, name, faces.distinctBy { it.name }, sources[name].orEmpty(),
@@ -139,13 +137,6 @@ internal object FontPickerCatalog {
 
     private val bundledPingFangFaces = listOf(
         PickerFace(DEFAULT_LYRIC_FONT_FAMILY, LyricFontWeight.REGULAR, false)
-    )
-
-    private val bundledFaces = listOf(
-        PickerFace("", LyricFontWeight.LIGHT, false),
-        PickerFace("", LyricFontWeight.REGULAR, false),
-        PickerFace("", LyricFontWeight.MEDIUM, false),
-        PickerFace("", LyricFontWeight.BOLD, false)
     )
 
     private fun baseFamily(name: String): String {

@@ -74,12 +74,6 @@ Unmodified library under LGPL-2.1-or-later (licenses/LGPL-2.1.txt).
 Used only for local metadata reading. The replaceable library JAR is in lib/;
 its corresponding upstream source JAR is included in source/.
 
-MiSans VF, Copyright Xiaomi.
-https://hyperos.mi.com/font
-Bundled for plugin UI text, both Windows right-click menus, the font picker
-preview, and the optional built-in MiSans lyric font.
-License terms accompany the distribution in licenses/MiSans-License.pdf.
-
 PingFang-style lyric font (PingFang.ttc), provided by the fork maintainer.
 Bundled as the default lyric font. Source and usage terms are recorded in
 licenses/PingFang-NOTICE.txt.

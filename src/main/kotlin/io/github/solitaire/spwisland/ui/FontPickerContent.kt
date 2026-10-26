@@ -62,8 +62,9 @@ internal fun FontPickerContent(current: IslandSettings, onCancel: () -> Unit, on
     var failure by remember { mutableStateOf<String?>(null) }
     var search by remember { mutableStateOf("") }
     var filter by remember { mutableStateOf("全部") }
-    var selected by remember { mutableStateOf(current.fontFamily) }
-    var faceName by remember { mutableStateOf(current.fontFamily) }
+    val initialFamily = current.fontFamily.ifBlank { DEFAULT_LYRIC_FONT_FAMILY }
+    var selected by remember { mutableStateOf(initialFamily) }
+    var faceName by remember { mutableStateOf(initialFamily) }
     var weight by remember { mutableStateOf(current.fontWeight) }
     var primary by remember { mutableStateOf("May you, the beauty of this world, always shine.") }
     var translation by remember { mutableStateOf("你便是世界上的美好，永远闪耀。") }
@@ -84,6 +85,16 @@ internal fun FontPickerContent(current: IslandSettings, onCancel: () -> Unit, on
                 families = withContext(Dispatchers.IO) { FontPickerCatalog.localize(loaded) }
             }
             .onFailure { failure = it.message ?: "字体列表读取失败" }
+    }
+    fun openMiSansDownload() {
+        failure = runCatching {
+            check(java.awt.Desktop.isDesktopSupported() &&
+                java.awt.Desktop.getDesktop().isSupported(java.awt.Desktop.Action.BROWSE)) {
+                "当前系统无法打开浏览器"
+            }
+            java.awt.Desktop.getDesktop().browse(java.net.URI.create("https://hyperos.mi.com/font"))
+            null
+        }.getOrElse { error -> "无法打开 MiSans 下载页面：${error.message.orEmpty()}" }
     }
     val family = families.firstOrNull { it.name == selected }
     val matching = families.filter { item ->
@@ -200,6 +211,8 @@ internal fun FontPickerContent(current: IslandSettings, onCancel: () -> Unit, on
             }
             Spacer(Modifier.height(15.dp))
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                ActionButton("从小米下载 MiSans", false, ::openMiSansDownload)
+                Spacer(Modifier.width(9.dp))
                 ActionButton("⟳  刷新字体列表", false) { refresh++ }
                 Spacer(Modifier.weight(1f))
                 ActionButton("取消", false, onCancel)
@@ -245,7 +258,7 @@ private fun ActionButton(label: String, primary: Boolean, onClick: () -> Unit) {
 
 private fun familyDisplayName(name: String): String = when (name) {
     DEFAULT_LYRIC_FONT_FAMILY -> "苹方（默认）"
-    "" -> "MiSans"
+    "" -> "苹方（默认）"
     else -> name
 }
 

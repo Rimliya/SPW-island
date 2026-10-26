@@ -596,7 +596,7 @@ LyricPainter
 | `WordGeometry.kt` | 在有界后台线程中准备单词和 grapheme 的字形几何，避免动画线程做昂贵轮廓运算 |
 | `TimedKaraokeBoundary.kt` | 低性能模式下只计算当前逐字单元的高亮边界 |
 | `LyricGlow.kt` | 长音强调的辉光绘制 |
-| `SystemUiFont.kt` | 加载插件界面用内置 MiSans、默认歌词用内置苹方、自定义歌词字体及缺字回退 |
+| `SystemUiFont.kt` | 加载内置苹方作为界面和默认歌词字体，并处理自定义歌词字体及缺字回退 |
 | `ComposeFontPickerWindow.kt` | 打开 Compose 字体窗口并回写选择结果 |
 | `FontPickerCatalog.kt` | 读取 Windows 已安装字体和可用字形，并提供搜索分类 |
 | `FontPickerContent.kt` | 字体窗口的搜索、字形选择与操作界面 |
@@ -669,7 +669,7 @@ PopupMenuEntry
 
 完整设置仍由 SPW 原生插件配置页提供。托盘菜单只提供高频操作，不应逐渐演变成第二套完整设置界面。
 
-关于窗口在 EDT 上更新已有状态行，状态变化不重建窗口；相同内容不重复替换文本。所有文字统一用内置 MiSans；说明文本不可选中或获取焦点。顶部关闭按钮用固定尺寸容器避免布局拉伸；按钮固定使用 BasicButtonUI 提供事件处理，自行绘制悬停、按下与键盘焦点，并将所有绘制裁剪到圆角轮廓，避免 GTK/Synth 改写字体或绘制默认按钮动画。Linux 使用整帧透明缓冲，避免子控件重绘时先清空矩形背景。
+关于窗口在 EDT 上更新已有状态行，状态变化不重建窗口；相同内容不重复替换文本。所有文字统一使用内置苹方；说明文本不可选中或获取焦点。顶部关闭按钮用固定尺寸容器避免布局拉伸；按钮固定使用 BasicButtonUI 提供事件处理，自行绘制悬停、按下与键盘焦点，并将所有绘制裁剪到圆角轮廓，避免 GTK/Synth 改写字体或绘制默认按钮动画。Linux 使用整帧透明缓冲，避免子控件重绘时先清空矩形背景。
 
 关于窗口独立于词岛窗口。显示期间抑制歌词控件展开，打开、关闭时清空悬停记录；其他窗口收到鼠标进入或移动事件时也清除旧记录。关闭关于窗口后，新的词岛鼠标事件可触发展开。
 
@@ -765,7 +765,6 @@ GNOME Wayland 使用 `SPW Island Pointer` 扩展，支持 GNOME 45–50。扩展
 | `src/main/resources/preference_config.json` | Windows / Linux / SPW 插件配置页声明 |
 | `src/main/resources/META-INF/extensions.idx` | 显式注册 `IslandPlaybackExtension` |
 | `src/main/resources/project.properties` | 构建时写入项目源代码地址 |
-| `native/shared-fonts/MiSansVF.ttf` | 插件界面、菜单和字体窗口使用的 MiSans，也可作为可选歌词字体 |
 | `native/shared-fonts/PingFang.ttc` | 默认歌词使用的内置苹方风格字体；由 fork 维护者提供，说明见 `licenses/PingFang-NOTICE.txt` |
 | `gradle.properties` | 项目版本与项目地址的统一来源 |
 | `build.gradle.kts` | 依赖、平台资源、频谱 helper、插件包和源码包构建 |

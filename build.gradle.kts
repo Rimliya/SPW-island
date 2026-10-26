@@ -69,7 +69,6 @@ val gnomePointer = tasks.register<Zip>("gnomePointer") {
 }
 tasks.processResources {
     doFirst { check(isWindows) { "Build the universal plugin on Windows with the native toolchains installed" } }
-    from("native/shared-fonts/MiSansVF.ttf") { into("fonts") }
     from("native/shared-fonts/PingFang.ttc") { into("fonts") }
     dependsOn("buildSpectrum", "buildWindowsTray", "buildWindowsGlass", "buildSpout", gnomePointer)
     from(layout.buildDirectory.file("native/spw-spectrum.exe")) { into("native") }

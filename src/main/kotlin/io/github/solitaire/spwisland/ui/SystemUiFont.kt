@@ -15,7 +15,7 @@ import java.util.concurrent.ConcurrentHashMap
 import java.awt.font.TextAttribute
 import kotlin.math.abs
 
-/** Creates the shared MiSans UI font, the bundled default lyric font, and custom lyric fonts. */
+/** Creates the shared PingFang UI font, bundled default lyric font, and custom lyric fonts. */
 internal object SystemUiFont {
     private data class InstalledFace(val font: Font, val weight: Int)
 
@@ -23,7 +23,7 @@ internal object SystemUiFont {
         GraphicsEnvironment.getLocalGraphicsEnvironment().allFonts.toList()
     }
     private val installedFamilies = ConcurrentHashMap<String, List<InstalledFace>>()
-    fun derive(style: Int, size: Float): Font = bundledMiSans.deriveFont(style, size)
+    fun derive(style: Int, size: Float): Font = bundledPingFangFace.deriveFont(style, size)
 
     fun lyric(family: String, weight: LyricFontWeight, size: Float): Font {
         if (family == DEFAULT_LYRIC_FONT_FAMILY) return bundledPingFang(weight, size)
@@ -159,14 +159,6 @@ internal object SystemUiFont {
         return candidates.firstOrNull { Files.isRegularFile(it) }
     }
 
-    private val bundledMiSans by lazy {
-        val resource = "/fonts/MiSansVF.ttf"
-        val stream = checkNotNull(SystemUiFont::class.java.getResourceAsStream(resource)) {
-            "内置字体资源缺失：$resource"
-        }
-        stream.use { Font.createFont(Font.TRUETYPE_FONT, it) }
-    }
-
     private val bundledPingFangFace by lazy {
         val resource = "/fonts/PingFang.ttc"
         val stream = checkNotNull(SystemUiFont::class.java.getResourceAsStream(resource)) {
@@ -180,8 +172,7 @@ internal object SystemUiFont {
             TextAttribute.SIZE to size))
 
     fun lyricFallback(weight: LyricFontWeight, size: Float): Font =
-        bundledMiSans.deriveFont(mapOf(TextAttribute.WEIGHT to lyricAwtWeight(weight),
-            TextAttribute.SIZE to size))
+        bundledPingFang(weight, size)
 
     private fun lyricAwtWeight(weight: LyricFontWeight): Float {
         val anchors = listOf(

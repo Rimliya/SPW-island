@@ -61,7 +61,6 @@ try {
 
     $requiredEntries = @(
         "classes/fonts/PingFang.ttc",
-        "classes/fonts/MiSansVF.ttf",
         "classes/native/spw-spectrum.exe",
         "classes/native/spw-island-tray.exe",
         "classes/native/spw-island-glass.dll",
